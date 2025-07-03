@@ -4,6 +4,7 @@ import { Doughnut } from 'react-chartjs-2';
 import { supabase } from './supabaseClient';
 import { useSupabaseAuth, useUserSettings, useTasks } from './supabaseService';
 import logo from './logo.svg';
+import { PlusCircle, Edit, Trash2, X } from "lucide-react";
 
 // Registro do Chart.js (corrigido)
 ChartJS.register(ArcElement, Tooltip, Legend);
