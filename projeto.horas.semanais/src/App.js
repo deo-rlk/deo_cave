@@ -1,173 +1,35 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from './supabaseClient';
+import { useSupabaseAuth, useUserSettings, useTasks } from './supabaseService';
 
 // Registro do Chart.js (corrigido)
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-// Configuração do Supabase (com validação)
-const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
-const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error("Variáveis de ambiente do Supabase não configuradas!");
-}
-
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
 // --- Componente Principal da Aplicação ---
 export default function App() {
     // --- Estados do Supabase ---
-    const [userId, setUserId] = useState(null);
-    const [isAuthReady, setIsAuthReady] = useState(false);
-
-    // --- Estados da Aplicação ---
-    const [tasks, setTasks] = useState([]);
-    const [totalWeeklyHours, setTotalWeeklyHours] = useState(40);
+    const { userId, isAuthReady, error: authError } = useSupabaseAuth();
+    const { totalWeeklyHours, setTotalWeeklyHours, error: settingsError, handleTotalHoursChange } = useUserSettings(userId, isAuthReady);
+    const { tasks, isLoading, error: tasksError, handleSaveTask, handleDeleteTask } = useTasks(userId, isAuthReady);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingTask, setEditingTask] = useState(null);
     const [notification, setNotification] = useState('');
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState(null);
 
-    // --- Inicialização do Supabase ---
-    useEffect(() => {
-        const checkSession = async () => {
-            const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-            
-            if (sessionError) {
-                console.error("Erro ao verificar sessão:", sessionError);
-                setError("Falha ao conectar com o servidor");
-                setIsAuthReady(true);
-                return;
-            }
-
-            if (session) {
-                setUserId(session.user.id);
-                setIsAuthReady(true);
-                return;
-            }
-
-            // Se não há sessão, faz login anônimo
-            const { data, error: signInError } = await supabase.auth.signInAnonymously();
-            
-            if (signInError) {
-                console.error("Erro no login anônimo:", signInError);
-                setError("Falha ao iniciar sessão");
-                setIsAuthReady(true);
-                return;
-            }
-
-            if (data?.user) {
-                setUserId(data.user.id);
-            }
-            setIsAuthReady(true);
-        };
-
-        checkSession();
-
-        // Listener para mudanças de autenticação
-        const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-            if (event === 'SIGNED_IN' && session?.user) {
-                setUserId(session.user.id);
-            }
-        });
-
-        return () => {
-            authListener.subscription.unsubscribe();
-        };
-    }, []);
-
-    // --- Sincronização de Dados com Supabase ---
-    useEffect(() => {
-        if (!isAuthReady || !userId) return;
-
-        setIsLoading(true);
-        setError(null);
-
-        // Buscar configurações do usuário
-        const fetchSettings = async () => {
-            try {
-                const { data, error: settingsError } = await supabase
-                    .from('user_settings')
-                    .select('total_weekly_hours')
-                    .eq('user_id', userId)
-                    .single();
-
-                if (settingsError && settingsError.code !== 'PGRST116') { // Ignora erro "nenhum resultado"
-                    throw settingsError;
-                }
-
-                if (data) {
-                    setTotalWeeklyHours(data.total_weekly_hours || 40);
-                } else {
-                    // Cria configurações padrão se não existirem
-                    await supabase
-                        .from('user_settings')
-                        .insert([{ user_id: userId, total_weekly_hours: 40 }]);
-                    setTotalWeeklyHours(40);
-                }
-            } catch (err) {
-                console.error("Erro ao buscar configurações:", err);
-                setError("Falha ao carregar configurações");
-            }
-        };
-
-        // Buscar tarefas do usuário
-        const fetchTasks = async () => {
-            try {
-                const { data, error: tasksError } = await supabase
-                    .from('tasks')
-                    .select('*')
-                    .eq('user_id', userId);
-
-                if (tasksError) throw tasksError;
-
-                setTasks(data || []);
-                setIsLoading(false);
-            } catch (err) {
-                console.error("Erro ao buscar tarefas:", err);
-                setError("Falha ao carregar tarefas");
-                setIsLoading(false);
-            }
-        };
-
-        fetchSettings();
-        fetchTasks();
-
-        // Listener em tempo real para tarefas
-        const tasksSubscription = supabase
-            .channel('tasks-channel')
-            .on('postgres_changes', {
-                event: '*',
-                schema: 'public',
-                table: 'tasks',
-                filter: `user_id=eq.${userId}`
-            }, async () => {
-                const { data } = await supabase
-                    .from('tasks')
-                    .select('*')
-                    .eq('user_id', userId);
-                setTasks(data || []);
-            })
-            .subscribe();
-
-        return () => {
-            tasksSubscription.unsubscribe();
-        };
-    }, [isAuthReady, userId]);
+    // --- Error Handling ---
+    const error = authError || settingsError || tasksError;
 
     // --- Cálculos de Tempo ---
     const { usedHours, remainingHours, excessHours } = useMemo(() => {
-        const used = tasks.reduce((acc, task) => acc + (Number(task.duration) || 0), 0); // Parêntese corrigido
-    const total = Number(totalWeeklyHours) || 0;
+        const used = tasks.reduce((acc, task) => acc + (Number(task.duration) || 0), 0);
+        const total = Number(totalWeeklyHours) || 0;
         return {
             usedHours: used,
             remainingHours: Math.max(0, total - used),
             excessHours: Math.max(0, used - total),
         };
-}, [tasks, totalWeeklyHours]);
+    }, [tasks, totalWeeklyHours]);
 
     // --- Notificação de Excesso de Horas ---
     useEffect(() => {
@@ -178,63 +40,6 @@ export default function App() {
             setNotification('');
         }
     }, [excessHours]);
-
-    // --- Funções de Manipulação de Dados ---
-    const handleTotalHoursChange = useCallback(async (e) => {
-        const newTotal = Number(e.target.value);
-        setTotalWeeklyHours(newTotal);
-        
-        if (userId) {
-            try {
-                await supabase
-                    .from('user_settings')
-                    .upsert({ 
-                        user_id: userId, 
-                        total_weekly_hours: newTotal 
-                    });
-            } catch (err) {
-                console.error("Erro ao atualizar configurações:", err);
-                setError("Falha ao salvar configurações");
-            }
-        }
-    }, [userId]);
-
-    const handleSaveTask = async (taskData) => {
-        if (!userId) return;
-        
-        try {
-            const taskToSave = {
-                ...taskData,
-                user_id: userId,
-                duration: Number(taskData.duration)
-            };
-            
-            await supabase
-                .from('tasks')
-                .upsert(taskToSave);
-                
-            closeModal();
-        } catch (err) {
-            console.error("Erro ao salvar tarefa:", err);
-            setError("Falha ao salvar tarefa");
-        }
-    };
-
-    const handleDeleteTask = async (taskId) => {
-        if (!userId) return;
-        
-        if (window.confirm('Tem certeza que deseja excluir esta tarefa?')) {
-            try {
-                await supabase
-                    .from('tasks')
-                    .delete()
-                    .eq('id', taskId);
-            } catch (err) {
-                console.error("Erro ao excluir tarefa:", err);
-                setError("Falha ao excluir tarefa");
-            }
-        }
-    };
 
     // --- Funções do Modal ---
     const openModal = (task = null) => {
