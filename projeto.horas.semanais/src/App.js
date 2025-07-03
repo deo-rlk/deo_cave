@@ -3,6 +3,7 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
 import { supabase } from './supabaseClient';
 import { useSupabaseAuth, useUserSettings, useTasks } from './supabaseService';
+import logo from './logo.svg';
 
 // Registro do Chart.js (corrigido)
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -138,9 +139,14 @@ export default function App() {
     return (
         <div className="min-h-screen bg-gray-900 text-gray-100 font-sans p-4 sm:p-6 lg:p-8">
             <div className="max-w-7xl mx-auto">
-                <header className="mb-8">
+                <header className="mb-8 flex flex-col items-center">
+                    <img src={logo} alt="Logo SVG" className="h-24 w-24 mb-4 animate-spin-slow" />
                     <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">Organizador Semanal</h1>
                     <p className="text-lg text-gray-400">Visualize e gerencie como seu tempo é distribuído.</p>
+                    <div className="flex gap-4 mt-4">
+                        <img src={process.env.PUBLIC_URL + '/logo192.png'} alt="Logo 192 PNG" className="h-12 w-12" />
+                        <img src={process.env.PUBLIC_URL + '/logo512.png'} alt="Logo 512 PNG" className="h-12 w-12" />
+                    </div>
                 </header>
 
                 {notification && (
