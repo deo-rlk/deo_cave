@@ -3,6 +3,7 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
 import { useSupabaseAuth, useUserSettings, useTasks } from './supabaseService';
 import { PlusCircle, Edit, Trash2, X } from "lucide-react";
+import './App.css';
 
 // Registro do Chart.js (corrigido)
 ChartJS.register(ArcElement, Tooltip, Legend);
