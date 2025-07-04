@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
 import { useSupabaseAuth, useUserSettings, useTasks } from './supabaseService';
@@ -20,13 +20,12 @@ export default function App() {
     const error = authError || settingsError || tasksError;
 
     // --- Cálculos de Tempo ---
-    const { usedHours, remainingHours, excessHours } = useMemo(() => {
+    const { usedHours, remainingHours } = useMemo(() => {
         const used = tasks.reduce((acc, task) => acc + (Number(task.duration) || 0), 0);
         const total = Number(totalWeeklyHours) || 0;
         return {
             usedHours: used,
             remainingHours: Math.max(0, total - used),
-            excessHours: Math.max(0, used - total),
         };
     }, [tasks, totalWeeklyHours]);
 
