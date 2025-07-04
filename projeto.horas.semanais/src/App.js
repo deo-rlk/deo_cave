@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
-import { supabase } from './supabaseClient';
 import { useSupabaseAuth, useUserSettings, useTasks } from './supabaseService';
 import logo from './logo.svg';
 import { PlusCircle, Edit, Trash2, X } from "lucide-react";
@@ -13,7 +12,7 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 export default function App() {
     // --- Estados do Supabase ---
     const { userId, isAuthReady, error: authError } = useSupabaseAuth();
-    const { totalWeeklyHours, setTotalWeeklyHours, error: settingsError, handleTotalHoursChange } = useUserSettings(userId, isAuthReady);
+    const { totalWeeklyHours, error: settingsError, handleTotalHoursChange } = useUserSettings(userId, isAuthReady);
     const { tasks, isLoading, error: tasksError, handleSaveTask, handleDeleteTask } = useTasks(userId, isAuthReady);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingTask, setEditingTask] = useState(null);
