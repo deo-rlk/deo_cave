@@ -137,89 +137,68 @@ export default function App() {
 
     // --- Renderização Principal ---
     return (
-        <div className="min-h-screen bg-gray-900 text-gray-100 font-sans p-4 sm:p-6 lg:p-8">
-            <div className="max-w-7xl mx-auto">
-                <header className="mb-8 flex flex-col items-center">
-                    <img src={logo} alt="Logo SVG" className="h-24 w-24 mb-4 animate-spin-slow" />
-                    <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">Organizador Semanal</h1>
-                    <p className="text-lg text-gray-400">Visualize e gerencie como seu tempo é distribuído.</p>
-                    <div className="flex gap-4 mt-4">
-                        <img src={process.env.PUBLIC_URL + '/logo192.png'} alt="Logo 192 PNG" className="h-12 w-12" />
-                        <img src={process.env.PUBLIC_URL + '/logo512.png'} alt="Logo 512 PNG" className="h-12 w-12" />
-                    </div>
-                </header>
-
-                {notification && (
-                    <div className="bg-red-500/20 border border-red-500 text-red-300 px-4 py-3 rounded-lg relative mb-6" role="alert">
-                        <strong className="font-bold">Atenção: </strong>
-                        <span className="block sm:inline">{notification}</span>
-                    </div>
-                )}
-
-                <main className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Coluna de Status e Gráfico */}
-                    <div className="lg:col-span-1 bg-gray-800 p-6 rounded-2xl shadow-lg flex flex-col h-full">
-                        <div className="mb-6">
-                            <label htmlFor="total-hours" className="block text-sm font-medium text-gray-300 mb-2">
-                                Total de Horas na Semana
-                            </label>
-                            <input
-                                type="number"
-                                id="total-hours"
-                                value={totalWeeklyHours}
-                                onChange={handleTotalHoursChange}
-                                className="w-full bg-gray-700 text-white border-gray-600 rounded-md p-2 text-center text-2xl font-bold focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4 mb-6 text-center">
-                            <div className="bg-gray-700/50 p-4 rounded-lg">
-                                <p className="text-sm text-gray-400">Usadas</p>
-                                <p className="text-2xl font-bold text-blue-400">{usedHours}h</p>
-                            </div>
-                            <div className="bg-gray-700/50 p-4 rounded-lg">
-                                <p className="text-sm text-gray-400">Restantes</p>
-                                <p className="text-2xl font-bold text-green-400">{remainingHours}h</p>
-                            </div>
-                        </div>
-                        <div className="relative flex-grow min-h-[250px] sm:min-h-[300px]">
-                            {tasks.length > 0 || remainingHours > 0 ? (
-                                <Doughnut data={chartData} options={chartOptions} />
-                            ) : (
-                                <div className="flex items-center justify-center h-full text-gray-500">
-                                    <p>Adicione uma tarefa para começar.</p>
-                                </div>
-                            )}
+        <div className="main-layout bg-gray-900 text-gray-100 font-sans p-4 sm:p-6 lg:p-8">
+            <div className="left-column">
+                {/* Top left card: Doughnut chart and total hours */}
+                <div className="card">
+                    <div className="card-title">Horas Semanais</div>
+                    <div className="doughnut-container">
+                        <Doughnut data={chartData} options={chartOptions} />
+                        <div style={{ marginTop: '1rem', fontSize: '1.1rem' }}>
+                            Total disponível: <strong>{totalWeeklyHours}h</strong>
                         </div>
                     </div>
-
-                    {/* Coluna de Tarefas */}
-                    <div className="lg:col-span-2 bg-gray-800 p-6 rounded-2xl shadow-lg">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-bold text-white">Minhas Tarefas</h2>
-                            <button
-                                onClick={() => openModal()}
-                                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105"
-                            >
-                                <PlusCircle className="h-5 w-5" />
-                                <span>Adicionar</span>
-                            </button>
+                </div>
+                {/* Bottom left card: Edit total hours, show free/occupied */}
+                <div className="card">
+                    <div className="card-title">Editar Horas Semanais</div>
+                    <div className="input-group">
+                        <label htmlFor="total-hours" className="input-label">Total de Horas na Semana</label>
+                        <input
+                            type="number"
+                            id="total-hours"
+                            value={totalWeeklyHours}
+                            onChange={handleTotalHoursChange}
+                            className="input-field"
+                        />
+                    </div>
+                    <div className="hours-info">
+                        <div className="hours-row">
+                            <span>Horas Livres:</span>
+                            <span style={{ color: '#22d3ee', fontWeight: 'bold' }}>{remainingHours}h</span>
                         </div>
-                        <div className="space-y-4">
-                            {tasks.length > 0 ? (
-                                tasks.map(task => (
-                                    <TaskItem key={task.id} task={task} onEdit={openModal} onDelete={handleDeleteTask} />
-                                ))
-                            ) : (
-                                <div className="text-center py-12 text-gray-500">
-                                    <p>Nenhuma tarefa cadastrada ainda.</p>
-                                    <p className="text-sm">Clique em "Adicionar" para criar sua primeira tarefa.</p>
-                                </div>
-                            )}
+                        <div className="hours-row">
+                            <span>Horas Ocupadas:</span>
+                            <span style={{ color: '#f472b6', fontWeight: 'bold' }}>{usedHours}h</span>
                         </div>
                     </div>
-                </main>
+                </div>
             </div>
-
+            {/* Right side: Task manager card */}
+            <div className="task-card">
+                <div className="card-title">Gerenciador de Tarefas</div>
+                <div className="flex justify-between items-center mb-6">
+                    <button
+                        onClick={() => openModal()}
+                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105"
+                    >
+                        <PlusCircle className="h-5 w-5" />
+                        <span>Adicionar</span>
+                    </button>
+                </div>
+                <div className="task-list">
+                    {tasks.length > 0 ? (
+                        tasks.map(task => (
+                            <TaskItem key={task.id} task={task} onEdit={openModal} onDelete={handleDeleteTask} />
+                        ))
+                    ) : (
+                        <div className="text-center py-12 text-gray-500">
+                            <p>Nenhuma tarefa cadastrada ainda.</p>
+                            <p className="text-sm">Clique em "Adicionar" para criar sua primeira tarefa.</p>
+                        </div>
+                    )}
+                </div>
+            </div>
             {isModalOpen && (
                 <TaskForm
                     task={editingTask}
