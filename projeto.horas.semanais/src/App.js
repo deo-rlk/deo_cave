@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
 import { useSupabaseAuth, useUserSettings, useTasks } from './supabaseService';
-import logo from './logo.svg';
 import { PlusCircle, Edit, Trash2, X } from "lucide-react";
 
 // Registro do Chart.js (corrigido)
@@ -16,7 +15,6 @@ export default function App() {
     const { tasks, isLoading, error: tasksError, handleSaveTask, handleDeleteTask } = useTasks(userId, isAuthReady);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingTask, setEditingTask] = useState(null);
-    const [notification, setNotification] = useState('');
 
     // --- Error Handling ---
     const error = authError || settingsError || tasksError;
@@ -31,16 +29,6 @@ export default function App() {
             excessHours: Math.max(0, used - total),
         };
     }, [tasks, totalWeeklyHours]);
-
-    // --- Notificação de Excesso de Horas ---
-    useEffect(() => {
-        if (excessHours > 0) {
-            const message = `Você excedeu seu limite semanal em ${excessHours} hora${excessHours > 1 ? 's' : ''}.`;
-            setNotification(message);
-        } else {
-            setNotification('');
-        }
-    }, [excessHours]);
 
     // --- Funções do Modal ---
     const openModal = (task = null) => {
