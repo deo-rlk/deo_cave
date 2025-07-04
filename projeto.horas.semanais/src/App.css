@@ -58,7 +58,7 @@
 }
 
 .card {
-  background: #23272f;
+  background: #1a237e; /* navy blue */
   border-radius: 1.5rem;
   box-shadow: 0 2px 16px 0 rgba(0,0,0,0.08);
   padding: 2rem;
@@ -132,7 +132,7 @@
 }
 
 .task-card {
-  background: #23272f;
+  background: #1a237e; /* navy blue */
   border-radius: 1.5rem;
   box-shadow: 0 2px 16px 0 rgba(0,0,0,0.08);
   padding: 2rem;
