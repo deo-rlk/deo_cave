@@ -20,19 +20,20 @@ export default function App() {
     const [currentTheme, setCurrentTheme] = useState(1);
     const [isCardFlipped, setIsCardFlipped] = useState(false);
     const leftColRef = useRef(null);
-    const [leftColHeight, setLeftColHeight] = useState('auto');
+    const bottomLeftCardRef = useRef(null);
+    const [rightCardHeight, setRightCardHeight] = useState('auto');
 
     // --- Theme Management ---
     useEffect(() => {
         document.body.className = `theme-${currentTheme}`;
     }, [currentTheme]);
 
-    // --- Sync Task Card Height with Left Column ---
+    // --- Sync Task Card Height with Bottom Left Card ---
     useEffect(() => {
-        if (leftColRef.current) {
-            setLeftColHeight(leftColRef.current.offsetHeight + 'px');
+        if (bottomLeftCardRef.current) {
+            setRightCardHeight(bottomLeftCardRef.current.offsetHeight + 'px');
         }
-    }, [tasks, totalWeeklyHours, isLoading]);
+    }, [tasks, totalWeeklyHours, isLoading, isCardFlipped]);
 
     const themes = [
         { id: 1, name: 'Nord Night', bg: '#1C1F26', card: '#2E3440' },
@@ -131,7 +132,7 @@ export default function App() {
                     </div>
                 </div>
                 {/* Bottom left card: Edit total hours, show free/occupied */}
-                <div className="card">
+                <div className="card" ref={bottomLeftCardRef}>
                     <div className="card-title">Editar Horas Semanais</div>
                     <div className="input-group">
                         <label htmlFor="total-hours" className="input-label">Total de Horas na Semana</label>
@@ -156,7 +157,7 @@ export default function App() {
                 </div>
             </div>
             {/* Right side: Task manager card with fade animation and synced height */}
-            <div className="task-card" style={{ minHeight: leftColHeight }}>
+            <div className="task-card" style={{ minHeight: rightCardHeight }}>
                 <div className="card-fade-container">
                     {/* Task List View */}
                     <div className={`card-fade-content${!isCardFlipped ? ' active' : ''}`}>
@@ -296,7 +297,7 @@ function TaskForm({ task, onSave, onClose, totalWeeklyHours, currentTasks }) {
     };
 
     return (
-        <div className="h-full flex flex-col" style={{ fontFamily: 'Inter, sans-serif', background: 'rgba(255,255,255,0.95)', borderRadius: '1.25rem', boxShadow: '0 4px 24px 0 rgba(0,0,0,0.08)', padding: 24 }}>
+        <div className="h-full flex flex-col task-form-card">
             <div className="flex justify-between items-center mb-6">
                 <h3 className="text-2xl font-bold tracking-tight text-gray-800" style={{ fontFamily: 'Inter, sans-serif' }}>{task ? 'Editar Tarefa' : 'Nova Tarefa'}</h3>
                 <button 

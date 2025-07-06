@@ -40,43 +40,80 @@
 /* Theme Variables */
 :root {
   --bg-color: #1C1F26;
-  --card-color: #2E3440;
+  --card-color: #3A475E;
   --text-color: #f3f4f6;
+  --offwhite: #f5f6fa;
+  --offwhite-grey: #e9ecf1;
 }
 
 /* Theme 1: Default */
 .theme-1 {
   --bg-color: #1C1F26;
-  --card-color: #2E3440;
+  --card-color: #3A475E;
   --text-color: #f3f4f6;
 }
 
 /* Theme 2 */
 .theme-2 {
   --bg-color: #1E2D3D;
-  --card-color: #3B4C5E;
+  --card-color: #5C708A;
   --text-color: #f3f4f6;
 }
 
 /* Theme 3 */
 .theme-3 {
-  --bg-color: #2A2E35;
-  --card-color: #43484F;
+  --bg-color: #2B2F36;
+  --card-color: #59626D;
   --text-color: #f3f4f6;
 }
 
 /* Theme 4 */
 .theme-4 {
-  --bg-color: #202124;
-  --card-color: #3C4043;
+  --bg-color: #232931;
+  --card-color: #5A5F66;
   --text-color: #f3f4f6;
 }
 
 /* Theme 5 */
 .theme-5 {
-  --bg-color: #2C3E50;
-  --card-color: #34495E;
+  --bg-color: #283544;
+  --card-color: #7C8B9F;
   --text-color: #f3f4f6;
+}
+
+/* Offwhite for hours info */
+.hours-row span:first-child {
+  color: #f5f6fa !important;
+}
+
+/* TaskForm card background (offwhite-grey) */
+.task-form-card {
+  background: var(--offwhite-grey) !important;
+  border-radius: 1.25rem;
+  box-shadow: 0 4px 24px 0 rgba(0,0,0,0.08);
+  padding: 24px;
+}
+
+/* Enhanced input styles for TaskForm */
+.task-form-card input[type="text"],
+.task-form-card input[type="number"],
+.task-form-card textarea {
+  background: #f5f6fa;
+  border: 1.5px solid #d1d5db;
+  box-shadow: 0 1px 4px 0 rgba(60,72,100,0.07);
+  color: #232931;
+  font-size: 1rem;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1.1rem;
+  transition: border 0.2s, box-shadow 0.2s;
+}
+.task-form-card input[type="text"]:focus,
+.task-form-card input[type="number"]:focus,
+.task-form-card textarea:focus {
+  border: 1.5px solid #5C708A;
+  box-shadow: 0 2px 8px 0 rgba(60,72,100,0.13);
+  outline: none;
+  background: #f8fafc;
 }
 
 .main-layout {
