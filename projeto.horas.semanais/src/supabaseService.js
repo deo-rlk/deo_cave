@@ -103,12 +103,14 @@ export function useTasks(userId, isAuthReady) {
     if (!isAuthReady || !userId) return;
     setIsLoading(true);
     setError(null);
+    
     const fetchTasks = async () => {
       try {
         const { data, error: tasksError } = await supabase
           .from('tasks')
           .select('*')
-          .eq('user_id', userId);
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false });
         if (tasksError) throw tasksError;
         setTasks(data || []);
         setIsLoading(false);
@@ -117,11 +119,11 @@ export function useTasks(userId, isAuthReady) {
         setIsLoading(false);
       }
     };
+    
     fetchTasks();
     
-    // Set up real-time subscription
-    const tasksSubscription = supabase
-      .channel('tasks-channel')
+    // Set up real-time subscription with better error handling
+    const channel = supabase.channel(`tasks-${userId}`)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
@@ -129,17 +131,30 @@ export function useTasks(userId, isAuthReady) {
         filter: `user_id=eq.${userId}`
       }, async (payload) => {
         console.log('Real-time update received:', payload);
-        // Fetch fresh data immediately
-        const { data } = await supabase
-          .from('tasks')
-          .select('*')
-          .eq('user_id', userId);
-        setTasks(data || []);
+        try {
+          // Fetch fresh data immediately
+          const { data, error } = await supabase
+            .from('tasks')
+            .select('*')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false });
+          
+          if (error) {
+            console.error('Error fetching tasks after real-time update:', error);
+            return;
+          }
+          
+          setTasks(data || []);
+        } catch (err) {
+          console.error('Error in real-time subscription:', err);
+        }
       })
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Subscription status:', status);
+      });
     
     return () => {
-      tasksSubscription.unsubscribe();
+      channel.unsubscribe();
     };
   }, [isAuthReady, userId]);
 
@@ -167,8 +182,9 @@ export function useTasks(userId, isAuthReady) {
           )
         );
       } else {
-        // Add new task (we'll get the real data from the subscription)
-        setTasks(prevTasks => [...prevTasks, taskToSave]);
+        // Add new task with a temporary ID for immediate UI feedback
+        const tempTask = { ...taskToSave, id: crypto.randomUUID() };
+        setTasks(prevTasks => [tempTask, ...prevTasks]);
       }
       
       // Call callback if provided for immediate UI feedback
@@ -196,7 +212,8 @@ export function useTasks(userId, isAuthReady) {
         const { data } = await supabase
           .from('tasks')
           .select('*')
-          .eq('user_id', userId);
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false });
         setTasks(data || []);
       }
     }

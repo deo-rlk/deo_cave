@@ -185,72 +185,65 @@ export default function App() {
                 </div>
             </div>
             
-            {/* Right side: Task manager card with flip animation */}
+            {/* Right side: Task manager card with fade animation */}
             <div className="task-card">
-                <div className="card-flip-container">
-                    <div className={`card-flip ${isCardFlipped ? 'flipped' : ''}`}>
-                        {/* Front of card - Task List */}
-                        <div className="card-front">
-                            <div className="card-content-transition">
-                                <div className="card-title">Gerenciador de Tarefas</div>
-                                <div className="flex justify-between items-center mb-6">
+                <div className="card-fade-container">
+                    {/* Task List View */}
+                    <div className={`card-fade-content${!isCardFlipped ? ' active' : ''}`}>
+                        <div className="card-title">Gerenciador de Tarefas</div>
+                        <div className="flex justify-between items-center mb-6">
+                            <button
+                                onClick={() => openModal()}
+                                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105"
+                            >
+                                <PlusCircle className="h-5 w-5" />
+                                <span>Adicionar</span>
+                            </button>
+                        </div>
+                        <div className="task-list">
+                            {tasks.length > 0 ? (
+                                tasks.map(task => (
+                                    <TaskItem key={task.id} task={task} onEdit={openModal} onDelete={handleDeleteTask} />
+                                ))
+                            ) : (
+                                <div className="text-center py-12 text-gray-500">
+                                    <p>Nenhuma tarefa cadastrada ainda.</p>
+                                    <p className="text-sm">Clique em "Adicionar" para criar sua primeira tarefa.</p>
+                                </div>
+                            )}
+                        </div>
+                        {/* Theme Switcher */}
+                        <div className="theme-switcher">
+                            <h4>Escolha um tema</h4>
+                            <div className="theme-options">
+                                {themes.map(theme => (
                                     <button
-                                        onClick={() => openModal()}
-                                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105"
-                                    >
-                                        <PlusCircle className="h-5 w-5" />
-                                        <span>Adicionar</span>
-                                    </button>
-                                </div>
-                                <div className="task-list">
-                                    {tasks.length > 0 ? (
-                                        tasks.map(task => (
-                                            <TaskItem key={task.id} task={task} onEdit={openModal} onDelete={handleDeleteTask} />
-                                        ))
-                                    ) : (
-                                        <div className="text-center py-12 text-gray-500">
-                                            <p>Nenhuma tarefa cadastrada ainda.</p>
-                                            <p className="text-sm">Clique em "Adicionar" para criar sua primeira tarefa.</p>
-                                        </div>
-                                    )}
-                                </div>
-                                
-                                {/* Theme Switcher */}
-                                <div className="theme-switcher">
-                                    <h4>Escolha um tema</h4>
-                                    <div className="theme-options">
-                                        {themes.map(theme => (
-                                            <button
-                                                key={theme.id}
-                                                className={`theme-option ${currentTheme === theme.id ? 'active' : ''}`}
-                                                onClick={() => handleThemeChange(theme.id)}
-                                                title={theme.name}
-                                                style={{
-                                                    '--bg-color': theme.bg,
-                                                    '--card-color': theme.card
-                                                }}
-                                            />
-                                        ))}
-                                    </div>
-                                </div>
+                                        key={theme.id}
+                                        className={`theme-option ${currentTheme === theme.id ? 'active' : ''}`}
+                                        onClick={() => handleThemeChange(theme.id)}
+                                        title={theme.name}
+                                        style={{
+                                            '--bg-color': theme.bg,
+                                            '--card-color': theme.card
+                                        }}
+                                    />
+                                ))}
                             </div>
                         </div>
-                        
-                        {/* Back of card - Task Form */}
-                        <div className="card-back">
-                            <div className="card-content-transition">
-                                <TaskForm
-                                    task={editingTask}
-                                    onSave={(taskData) => {
-                                        handleSaveTask(taskData, () => {
-                                            // Immediate feedback - the real-time subscription will handle the actual update
-                                            closeModal();
-                                        });
-                                    }}
-                                    onClose={closeModal}
-                                />
-                            </div>
-                        </div>
+                    </div>
+                    {/* Task Form View */}
+                    <div className={`card-fade-content${isCardFlipped ? ' active' : ''}`}>
+                        <TaskForm
+                            task={editingTask}
+                            onSave={(taskData) => {
+                                handleSaveTask(taskData, () => {
+                                    closeModal();
+                                });
+                            }}
+                            onClose={closeModal}
+                            totalWeeklyHours={totalWeeklyHours}
+                            currentTasks={tasks}
+                        />
                     </div>
                 </div>
             </div>
@@ -282,7 +275,7 @@ function TaskItem({ task, onEdit, onDelete }) {
 }
 
 // --- Componente do Formulário da Tarefa (Modal) ---
-function TaskForm({ task, onSave, onClose }) {
+function TaskForm({ task, onSave, onClose, totalWeeklyHours, currentTasks }) {
     const [formData, setFormData] = useState({
         id: task?.id || crypto.randomUUID(),
         name: task?.name || '',
@@ -290,6 +283,14 @@ function TaskForm({ task, onSave, onClose }) {
         color: task?.color || '#3b82f6',
         description: task?.description || '',
     });
+
+    // Calculate current used hours (excluding the task being edited)
+    const currentUsedHours = currentTasks
+        .filter(t => t.id !== task?.id) // Exclude the task being edited
+        .reduce((acc, t) => acc + (Number(t.duration) || 0), 0);
+
+    // Calculate available hours for new tasks
+    const availableHours = totalWeeklyHours - currentUsedHours;
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -310,6 +311,13 @@ function TaskForm({ task, onSave, onClose }) {
             alert('Por favor, informe uma duração válida (maior que zero).');
             return;
         }
+
+        // Check if the new task would exceed the total weekly hours
+        const newTotalHours = currentUsedHours + duration;
+        if (newTotalHours > totalWeeklyHours) {
+            alert(`Não é possível adicionar ${duration}h. Você tem apenas ${availableHours}h disponíveis de ${totalWeeklyHours}h totais.`);
+            return;
+        }
         
         onSave({
             ...formData,
@@ -328,6 +336,20 @@ function TaskForm({ task, onSave, onClose }) {
                 >
                     <X className="h-6 w-6" />
                 </button>
+            </div>
+            
+            {/* Hours Info */}
+            <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="flex justify-between items-center text-sm">
+                    <span>Horas disponíveis:</span>
+                    <span className="font-semibold text-blue-700">{availableHours}h de {totalWeeklyHours}h</span>
+                </div>
+                <div className="mt-2 text-xs text-gray-600">
+                    {availableHours <= 0 ? 
+                        'Você não tem horas disponíveis. Remova algumas tarefas ou aumente o total de horas semanais.' :
+                        `Você pode adicionar até ${availableHours}h nesta tarefa.`
+                    }
+                </div>
             </div>
             
             <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
@@ -356,10 +378,14 @@ function TaskForm({ task, onSave, onClose }) {
                                 onChange={handleChange} 
                                 required 
                                 min="0.1" 
+                                max={availableHours}
                                 step="0.1" 
                                 className="w-full bg-white/90 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 transition-all" 
                                 placeholder="0.0"
                             />
+                            <div className="text-xs text-gray-500 mt-1">
+                                Máximo: {availableHours}h
+                            </div>
                         </div>
                         <div>
                             <label htmlFor="color" className="block text-sm font-medium mb-2">Cor</label>
@@ -397,7 +423,12 @@ function TaskForm({ task, onSave, onClose }) {
                     </button>
                     <button 
                         type="submit" 
-                        className="py-3 px-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+                        disabled={availableHours <= 0}
+                        className={`py-3 px-6 font-semibold rounded-lg transition-colors ${
+                            availableHours <= 0 
+                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                                : 'bg-blue-600 hover:bg-blue-700 text-white'
+                        }`}
                     >
                         {task ? 'Atualizar' : 'Criar'} Tarefa
                     </button>
