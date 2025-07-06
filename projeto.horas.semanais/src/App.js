@@ -1,8 +1,12 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import Plot from 'react-plotly.js';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import { Doughnut } from 'react-chartjs-2';
 import { useSupabaseAuth, useUserSettings, useTasks } from './supabaseService';
 import { PlusCircle, Edit, Trash2, X } from "lucide-react";
 import './App.css';
+
+// Register Chart.js components
+ChartJS.register(ArcElement, Tooltip, Legend);
 
 // --- Componente Principal da Aplicação ---
 export default function App() {
@@ -68,46 +72,62 @@ export default function App() {
         }, 400); // Wait for animation to complete
     };
 
-    // --- Dados para o Gráfico (Plotly Donut) ---
-    const chartLabels = tasks.map(task => task.name);
-    const chartValues = tasks.map(task => task.duration);
-    const chartColors = tasks.map(task => task.color);
-    if (remainingHours > 0) {
-        chartLabels.push('Tempo Livre');
-        chartValues.push(remainingHours);
-        chartColors.push('#d1d5db');
-    }
+    // --- Dados para o Gráfico (Chart.js Doughnut) ---
+    const chartData = useMemo(() => {
+        const labels = tasks.map(task => task.name);
+        const data = tasks.map(task => task.duration);
+        const colors = tasks.map(task => task.color);
+        if (remainingHours > 0) {
+            labels.push('Tempo Livre');
+            data.push(remainingHours);
+            colors.push('#d1d5db');
+        }
+        return {
+            labels,
+            datasets: [{
+                label: 'Horas',
+                data,
+                backgroundColor: colors,
+                borderColor: '#1f2937',
+                borderWidth: 2,
+            }],
+        };
+    }, [tasks, remainingHours]);
+
+    const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '60%',
+        plugins: {
+            legend: {
+                display: false,
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        let label = context.label || '';
+                        if (label) {
+                            label += ': ';
+                        }
+                        if (context.parsed !== null) {
+                            label += `${context.parsed}h`;
+                        }
+                        return label;
+                    }
+                }
+            }
+        },
+    };
 
     // --- Renderização Principal ---
     return (
         <div className="main-layout">
             <div className="left-column" ref={leftColRef}>
-                {/* Top left card: Donut chart and total hours */}
+                {/* Top left card: Doughnut chart and total hours */}
                 <div className="card">
                     <div className="card-title">Horas Semanais</div>
                     <div className="doughnut-container" style={{ minHeight: 260 }}>
-                        <Plot
-                            data={[{
-                                values: chartValues,
-                                labels: chartLabels,
-                                marker: { colors: chartColors },
-                                type: 'pie',
-                                hole: 0.6,
-                                textinfo: 'label+percent',
-                                textfont: { size: 16, family: 'Inter, sans-serif' },
-                                hoverinfo: 'label+value',
-                                sort: false,
-                            }]}
-                            layout={{
-                                showlegend: false,
-                                margin: { t: 0, b: 0, l: 0, r: 0 },
-                                paper_bgcolor: 'rgba(0,0,0,0)',
-                                plot_bgcolor: 'rgba(0,0,0,0)',
-                                height: 220,
-                            }}
-                            config={{ displayModeBar: false }}
-                            style={{ width: '100%', height: '220px' }}
-                        />
+                        <Doughnut data={chartData} options={chartOptions} />
                         <div style={{ marginTop: '1rem', fontSize: '1.1rem', fontWeight: 500 }}>
                             Horas livres para usar: <strong>{remainingHours}h</strong>
                         </div>
