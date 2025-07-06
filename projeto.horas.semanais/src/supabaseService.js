@@ -161,33 +161,32 @@ export function useTasks(userId, isAuthReady) {
   const handleSaveTask = async (taskData, callback) => {
     if (!userId) return;
     try {
+      // Only include id if editing an existing task
+      const isEditing = Boolean(taskData.id && typeof taskData.id === 'number');
       const taskToSave = {
-        ...taskData,
         user_id: userId,
-        duration: Number(taskData.duration)
+        name: taskData.name,
+        duration: Number(taskData.duration),
+        color: taskData.color,
+        description: taskData.description || ''
       };
-      
+      if (isEditing) {
+        taskToSave.id = taskData.id;
+      }
       const { error } = await supabase
         .from('tasks')
         .upsert(taskToSave, { returning: 'minimal' });
-      
       if (error) throw error;
-      
       // Optimistically update the local state immediately
-      if (taskData.id) {
-        // Update existing task
+      if (isEditing) {
         setTasks(prevTasks => 
           prevTasks.map(task => 
             task.id === taskData.id ? { ...task, ...taskToSave } : task
           )
         );
       } else {
-        // Add new task with a temporary ID for immediate UI feedback
-        const tempTask = { ...taskToSave, id: crypto.randomUUID() };
-        setTasks(prevTasks => [tempTask, ...prevTasks]);
+        // Do not add a fake id, let the subscription update the UI
       }
-      
-      // Call callback if provided for immediate UI feedback
       if (callback) callback();
     } catch (err) {
       setError('Falha ao salvar tarefa');
