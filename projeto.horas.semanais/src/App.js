@@ -11,9 +11,9 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 // --- Componente Principal da Aplicação ---
 export default function App() {
     // --- Estados do Supabase ---
-    const { userId, isAuthReady, error: authError } = useSupabaseAuth();
-    const { totalWeeklyHours, error: settingsError, handleTotalHoursChange } = useUserSettings(userId, isAuthReady);
-    const { tasks, isLoading, error: tasksError, handleSaveTask, handleDeleteTask } = useTasks(userId, isAuthReady);
+    const { userId, isAuthReady } = useSupabaseAuth();
+    const { totalWeeklyHours, handleTotalHoursChange } = useUserSettings(userId, isAuthReady);
+    const { tasks, isLoading, handleSaveTask, handleDeleteTask } = useTasks(userId, isAuthReady);
     
     // --- Estados de UI ---
     const [editingTask, setEditingTask] = useState(null);
@@ -45,9 +45,6 @@ export default function App() {
     const handleThemeChange = (themeId) => {
         setCurrentTheme(themeId);
     };
-
-    // --- Error Handling ---
-    const error = authError || settingsError || tasksError;
 
     // --- Cálculos de Tempo ---
     const { usedHours, remainingHours } = useMemo(() => {
