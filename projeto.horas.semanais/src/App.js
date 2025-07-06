@@ -26,11 +26,11 @@ export default function App() {
     }, [currentTheme]);
 
     const themes = [
-        { id: 1, name: 'Ocean', bg: '#0A192F', card: '#A8D8C9' },
-        { id: 2, name: 'Sunset', bg: '#333333', card: '#FBC4AB' },
-        { id: 3, name: 'Forest', bg: '#8A9A5B', card: '#F5F5F5' },
-        { id: 4, name: 'Desert', bg: '#F0EBE3', card: '#005F6B' },
-        { id: 5, name: 'Royal', bg: '#4C2A4C', card: '#E6E6FA' }
+        { id: 1, name: 'Ocean Blue', bg: '#0B1D3A', card: '#7FA1C2' },
+        { id: 2, name: 'Forest Green', bg: '#1B3B2F', card: '#A9DCC3' },
+        { id: 3, name: 'Royal Purple', bg: '#2C1A47', card: '#CAB8FF' },
+        { id: 4, name: 'Lavender', bg: '#3A2E39', card: '#D9C4DD' },
+        { id: 5, name: 'Steel Blue', bg: '#223843', card: '#9DB4C0' }
     ];
 
     const handleThemeChange = (themeId) => {
@@ -191,61 +191,65 @@ export default function App() {
                     <div className={`card-flip ${isCardFlipped ? 'flipped' : ''}`}>
                         {/* Front of card - Task List */}
                         <div className="card-front">
-                <div className="card-title">Gerenciador de Tarefas</div>
-                <div className="flex justify-between items-center mb-6">
-                    <button
-                        onClick={() => openModal()}
-                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105"
-                    >
-                        <PlusCircle className="h-5 w-5" />
-                        <span>Adicionar</span>
-                    </button>
-                </div>
-                <div className="task-list">
-                    {tasks.length > 0 ? (
-                        tasks.map(task => (
-                            <TaskItem key={task.id} task={task} onEdit={openModal} onDelete={handleDeleteTask} />
-                        ))
-                    ) : (
-                        <div className="text-center py-12 text-gray-500">
-                            <p>Nenhuma tarefa cadastrada ainda.</p>
-                            <p className="text-sm">Clique em "Adicionar" para criar sua primeira tarefa.</p>
-                        </div>
-                    )}
-                </div>
-                            
-                            {/* Theme Switcher */}
-                            <div className="theme-switcher">
-                                <h4>Escolha um tema</h4>
-                                <div className="theme-options">
-                                    {themes.map(theme => (
-                                        <button
-                                            key={theme.id}
-                                            className={`theme-option ${currentTheme === theme.id ? 'active' : ''}`}
-                                            onClick={() => handleThemeChange(theme.id)}
-                                            title={theme.name}
-                                            style={{
-                                                '--bg-color': theme.bg,
-                                                '--card-color': theme.card
-                                            }}
-                                        />
-                                    ))}
+                            <div className="card-content-transition">
+                                <div className="card-title">Gerenciador de Tarefas</div>
+                                <div className="flex justify-between items-center mb-6">
+                                    <button
+                                        onClick={() => openModal()}
+                                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105"
+                                    >
+                                        <PlusCircle className="h-5 w-5" />
+                                        <span>Adicionar</span>
+                                    </button>
+                                </div>
+                                <div className="task-list">
+                                    {tasks.length > 0 ? (
+                                        tasks.map(task => (
+                                            <TaskItem key={task.id} task={task} onEdit={openModal} onDelete={handleDeleteTask} />
+                                        ))
+                                    ) : (
+                                        <div className="text-center py-12 text-gray-500">
+                                            <p>Nenhuma tarefa cadastrada ainda.</p>
+                                            <p className="text-sm">Clique em "Adicionar" para criar sua primeira tarefa.</p>
+                                        </div>
+                                    )}
+                                </div>
+                                
+                                {/* Theme Switcher */}
+                                <div className="theme-switcher">
+                                    <h4>Escolha um tema</h4>
+                                    <div className="theme-options">
+                                        {themes.map(theme => (
+                                            <button
+                                                key={theme.id}
+                                                className={`theme-option ${currentTheme === theme.id ? 'active' : ''}`}
+                                                onClick={() => handleThemeChange(theme.id)}
+                                                title={theme.name}
+                                                style={{
+                                                    '--bg-color': theme.bg,
+                                                    '--card-color': theme.card
+                                                }}
+                                            />
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
-            </div>
+                        </div>
                         
                         {/* Back of card - Task Form */}
                         <div className="card-back">
-                <TaskForm
-                    task={editingTask}
-                                onSave={(taskData) => {
-                                    handleSaveTask(taskData, () => {
-                                        // Immediate feedback - the real-time subscription will handle the actual update
-                                        closeModal();
-                                    });
-                                }}
-                    onClose={closeModal}
-                />
+                            <div className="card-content-transition">
+                                <TaskForm
+                                    task={editingTask}
+                                    onSave={(taskData) => {
+                                        handleSaveTask(taskData, () => {
+                                            // Immediate feedback - the real-time subscription will handle the actual update
+                                            closeModal();
+                                        });
+                                    }}
+                                    onClose={closeModal}
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -315,76 +319,90 @@ function TaskForm({ task, onSave, onClose }) {
 
     return (
         <div className="h-full flex flex-col">
-                        <div className="flex justify-between items-center mb-4">
+            <div className="flex justify-between items-center mb-6">
                 <h3 className="text-xl font-bold">{task ? 'Editar Tarefa' : 'Nova Tarefa'}</h3>
-                <button type="button" onClick={onClose} className="p-1 hover:bg-gray-700 rounded-full">
-                                <X className="h-6 w-6" />
-                            </button>
-                        </div>
-                        
+                <button 
+                    type="button" 
+                    onClick={onClose} 
+                    className="p-2 hover:bg-gray-200 rounded-full transition-colors"
+                >
+                    <X className="h-6 w-6" />
+                </button>
+            </div>
+            
             <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
-                <div className="space-y-4 flex-1">
-                            <div>
-                        <label htmlFor="name" className="block text-sm font-medium mb-1">Nome da Tarefa *</label>
-                                <input 
-                                    type="text" 
-                                    name="name" 
-                                    id="name" 
-                                    value={formData.name} 
-                                    onChange={handleChange} 
-                                    required 
-                            className="w-full bg-white/90 border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 text-gray-900" 
-                                />
-                            </div>
-                            <div className="flex gap-4">
-                                <div className="flex-grow">
-                            <label htmlFor="duration" className="block text-sm font-medium mb-1">Duração (horas/semana) *</label>
-                                    <input 
-                                        type="number" 
-                                        name="duration" 
-                                        id="duration" 
-                                        value={formData.duration} 
-                                        onChange={handleChange} 
-                                        required 
-                                        min="0.1" 
-                                        step="0.1" 
-                                className="w-full bg-white/90 border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 text-gray-900" 
-                                    />
-                                </div>
-                                <div>
-                            <label htmlFor="color" className="block text-sm font-medium mb-1">Cor</label>
-                                    <input 
-                                        type="color" 
-                                        name="color" 
-                                        id="color" 
-                                        value={formData.color} 
-                                        onChange={handleChange} 
-                                className="w-16 h-10 p-1 bg-white/90 border border-gray-300 rounded-md cursor-pointer" 
-                                    />
-                                </div>
-                            </div>
-                            <div>
-                        <label htmlFor="description" className="block text-sm font-medium mb-1">Observação (Opcional)</label>
-                                <textarea 
-                                    name="description" 
-                                    id="description" 
-                                    value={formData.description} 
-                                    onChange={handleChange} 
-                                    rows="3" 
-                            className="w-full bg-white/90 border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 text-gray-900"
-                                ></textarea>
-                            </div>
-                        </div>
-                
-                <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-                        <button type="button" onClick={onClose} className="py-2 px-4 bg-gray-600 hover:bg-gray-500 text-white font-semibold rounded-lg transition-colors">
-                            Cancelar
-                        </button>
-                        <button type="submit" className="py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors">
-                            Salvar Tarefa
-                        </button>
+                <div className="space-y-6 flex-1">
+                    <div>
+                        <label htmlFor="name" className="block text-sm font-medium mb-2">Nome da Tarefa *</label>
+                        <input 
+                            type="text" 
+                            name="name" 
+                            id="name" 
+                            value={formData.name} 
+                            onChange={handleChange} 
+                            required 
+                            className="w-full bg-white/90 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 transition-all" 
+                            placeholder="Digite o nome da tarefa"
+                        />
                     </div>
-                </form>
+                    <div className="flex gap-4">
+                        <div className="flex-grow">
+                            <label htmlFor="duration" className="block text-sm font-medium mb-2">Duração (horas/semana) *</label>
+                            <input 
+                                type="number" 
+                                name="duration" 
+                                id="duration" 
+                                value={formData.duration} 
+                                onChange={handleChange} 
+                                required 
+                                min="0.1" 
+                                step="0.1" 
+                                className="w-full bg-white/90 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 transition-all" 
+                                placeholder="0.0"
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="color" className="block text-sm font-medium mb-2">Cor</label>
+                            <input 
+                                type="color" 
+                                name="color" 
+                                id="color" 
+                                value={formData.color} 
+                                onChange={handleChange} 
+                                className="w-16 h-12 p-1 bg-white/90 border border-gray-300 rounded-lg cursor-pointer transition-all hover:scale-105" 
+                            />
+                        </div>
+                    </div>
+                    <div>
+                        <label htmlFor="description" className="block text-sm font-medium mb-2">Observação (Opcional)</label>
+                        <textarea 
+                            name="description" 
+                            id="description" 
+                            value={formData.description} 
+                            onChange={handleChange} 
+                            rows="4" 
+                            className="w-full bg-white/90 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 transition-all resize-none"
+                            placeholder="Adicione uma observação sobre a tarefa..."
+                        ></textarea>
+                    </div>
+                </div>
+                
+                <div className="flex justify-end gap-3 pt-6 border-t border-gray-200 mt-6">
+                    <button 
+                        type="button" 
+                        onClick={onClose} 
+                        className="py-3 px-6 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-lg transition-colors"
+                    >
+                        Cancelar
+                    </button>
+                    <button 
+                        type="submit" 
+                        className="py-3 px-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+                    >
+                        {task ? 'Atualizar' : 'Criar'} Tarefa
+                    </button>
+                </div>
+            </form>
         </div>
     );
 }

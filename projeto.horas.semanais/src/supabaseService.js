@@ -118,6 +118,8 @@ export function useTasks(userId, isAuthReady) {
       }
     };
     fetchTasks();
+    
+    // Set up real-time subscription
     const tasksSubscription = supabase
       .channel('tasks-channel')
       .on('postgres_changes', {
@@ -125,7 +127,9 @@ export function useTasks(userId, isAuthReady) {
         schema: 'public',
         table: 'tasks',
         filter: `user_id=eq.${userId}`
-      }, async () => {
+      }, async (payload) => {
+        console.log('Real-time update received:', payload);
+        // Fetch fresh data immediately
         const { data } = await supabase
           .from('tasks')
           .select('*')
@@ -133,6 +137,7 @@ export function useTasks(userId, isAuthReady) {
         setTasks(data || []);
       })
       .subscribe();
+    
     return () => {
       tasksSubscription.unsubscribe();
     };
@@ -146,16 +151,31 @@ export function useTasks(userId, isAuthReady) {
         user_id: userId,
         duration: Number(taskData.duration)
       };
-      const { error } = await supabase
+      
+      const { data, error } = await supabase
         .from('tasks')
-        .upsert(taskToSave);
+        .upsert(taskToSave, { returning: 'minimal' });
       
       if (error) throw error;
+      
+      // Optimistically update the local state immediately
+      if (taskData.id) {
+        // Update existing task
+        setTasks(prevTasks => 
+          prevTasks.map(task => 
+            task.id === taskData.id ? { ...task, ...taskToSave } : task
+          )
+        );
+      } else {
+        // Add new task (we'll get the real data from the subscription)
+        setTasks(prevTasks => [...prevTasks, taskToSave]);
+      }
       
       // Call callback if provided for immediate UI feedback
       if (callback) callback();
     } catch (err) {
       setError('Falha ao salvar tarefa');
+      console.error('Save task error:', err);
     }
   };
 
@@ -163,12 +183,21 @@ export function useTasks(userId, isAuthReady) {
     if (!userId) return;
     if (window.confirm('Tem certeza que deseja excluir esta tarefa?')) {
       try {
+        // Optimistically remove from local state
+        setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
+        
         await supabase
           .from('tasks')
           .delete()
           .eq('id', taskId);
       } catch (err) {
         setError('Falha ao excluir tarefa');
+        // Revert optimistic update on error
+        const { data } = await supabase
+          .from('tasks')
+          .select('*')
+          .eq('user_id', userId);
+        setTasks(data || []);
       }
     }
   };
