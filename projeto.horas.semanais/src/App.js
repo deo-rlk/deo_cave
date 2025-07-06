@@ -277,7 +277,7 @@ function TaskItem({ task, onEdit, onDelete }) {
 // --- Componente do Formulário da Tarefa (Modal) ---
 function TaskForm({ task, onSave, onClose, totalWeeklyHours, currentTasks }) {
     const [formData, setFormData] = useState({
-        id: task?.id || crypto.randomUUID(),
+        id: task?.id || null,
         name: task?.name || '',
         duration: task?.duration || '',
         color: task?.color || '#3b82f6',
