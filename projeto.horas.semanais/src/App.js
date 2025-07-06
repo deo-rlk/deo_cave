@@ -28,11 +28,16 @@ export default function App() {
         document.body.className = `theme-${currentTheme}`;
     }, [currentTheme]);
 
-    // --- Sync Task Card Height with Bottom Left Card ---
+    // --- Sync Task Card Height with Bottom Left Card using ResizeObserver ---
     useEffect(() => {
-        if (bottomLeftCardRef.current) {
+        if (!bottomLeftCardRef.current) return;
+        const updateHeight = () => {
             setRightCardHeight(bottomLeftCardRef.current.offsetHeight + 'px');
-        }
+        };
+        updateHeight();
+        const observer = new window.ResizeObserver(updateHeight);
+        observer.observe(bottomLeftCardRef.current);
+        return () => observer.disconnect();
     }, [tasks, totalWeeklyHours, isLoading, isCardFlipped]);
 
     const themes = [
@@ -119,105 +124,107 @@ export default function App() {
 
     // --- Renderização Principal ---
     return (
-        <div className="main-layout">
-            <div className="left-column" ref={leftColRef}>
-                {/* Top left card: Doughnut chart and total hours */}
-                <div className="card">
-                    <div className="card-title">Horas Semanais</div>
-                    <div className="doughnut-container" style={{ minHeight: 260 }}>
-                        <Doughnut data={chartData} options={chartOptions} />
-                        <div style={{ marginTop: '1rem', fontSize: '1.1rem', fontWeight: 500 }}>
-                            Horas livres para usar: <strong>{remainingHours}h</strong>
-                        </div>
-                    </div>
-                </div>
-                {/* Bottom left card: Edit total hours, show free/occupied */}
-                <div className="card" ref={bottomLeftCardRef}>
-                    <div className="card-title">Editar Horas Semanais</div>
-                    <div className="input-group">
-                        <label htmlFor="total-hours" className="input-label">Total de Horas na Semana</label>
-                        <input
-                            type="number"
-                            id="total-hours"
-                            value={totalWeeklyHours}
-                            onChange={handleTotalHoursChange}
-                            className="input-field"
-                        />
-                    </div>
-                    <div className="hours-info">
-                        <div className="hours-row">
-                            <span>Horas Livres:</span>
-                            <span style={{ color: '#22d3ee', fontWeight: 'bold' }}>{remainingHours}h</span>
-                        </div>
-                        <div className="hours-row">
-                            <span>Horas Ocupadas:</span>
-                            <span style={{ color: '#f472b6', fontWeight: 'bold' }}>{usedHours}h</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {/* Right side: Task manager card with fade animation and synced height */}
-            <div className="task-card" style={{ height: rightCardHeight }}>
-                <div className="card-fade-container">
-                    {/* Task List View */}
-                    <div className={`card-fade-content${!isCardFlipped ? ' active' : ''}`}>
-                        <div className="card-title">Gerenciador de Tarefas</div>
-                        <div className="flex justify-between items-center mb-6">
-                            <button
-                                onClick={() => openModal()}
-                                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105"
-                            >
-                                <PlusCircle className="h-5 w-5" />
-                                <span>Adicionar</span>
-                            </button>
-                        </div>
-                        <div className="task-list">
-                            {tasks.length > 0 ? (
-                                tasks.map(task => (
-                                    <TaskItem key={task.id} task={task} onEdit={openModal} onDelete={handleDeleteTask} />
-                                ))
-                            ) : (
-                                <div className="text-center py-12 text-gray-500">
-                                    <p>Nenhuma tarefa cadastrada ainda.</p>
-                                    <p className="text-sm">Clique em "Adicionar" para criar sua primeira tarefa.</p>
-                                </div>
-                            )}
-                        </div>
-                        {/* Theme Switcher */}
-                        <div className="theme-switcher">
-                            <h4>Escolha um tema</h4>
-                            <div className="theme-options">
-                                {themes.map(theme => (
-                                    <button
-                                        key={theme.id}
-                                        className={`theme-option ${currentTheme === theme.id ? 'active' : ''}`}
-                                        onClick={() => handleThemeChange(theme.id)}
-                                        title={theme.name}
-                                        style={{
-                                            background: `linear-gradient(45deg, ${theme.bg} 50%, ${theme.card} 50%)`
-                                        }}
-                                    />
-                                ))}
+        <>
+            <div className="main-layout">
+                <div className="left-column" ref={leftColRef}>
+                    {/* Top left card: Doughnut chart and total hours */}
+                    <div className="card">
+                        <div className="card-title">Horas Semanais</div>
+                        <div className="doughnut-container" style={{ minHeight: 260 }}>
+                            <Doughnut data={chartData} options={chartOptions} />
+                            <div style={{ marginTop: '1rem', fontSize: '1.1rem', fontWeight: 500 }}>
+                                Horas livres para usar: <strong>{remainingHours}h</strong>
                             </div>
                         </div>
                     </div>
-                    {/* Task Form View */}
-                    <div className={`card-fade-content${isCardFlipped ? ' active centered-form' : ''}`}>
-                        <TaskForm
-                            task={editingTask}
-                            onSave={(taskData) => {
-                                handleSaveTask(taskData, () => {
-                                    closeModal();
-                                });
-                            }}
-                            onClose={closeModal}
-                            totalWeeklyHours={totalWeeklyHours}
-                            currentTasks={tasks}
-                        />
+                    {/* Bottom left card: Edit total hours, show free/occupied */}
+                    <div className="card" ref={bottomLeftCardRef}>
+                        <div className="card-title">Editar Horas Semanais</div>
+                        <div className="input-group">
+                            <label htmlFor="total-hours" className="input-label">Total de Horas na Semana</label>
+                            <input
+                                type="number"
+                                id="total-hours"
+                                value={totalWeeklyHours}
+                                onChange={handleTotalHoursChange}
+                                className="input-field"
+                            />
+                        </div>
+                        <div className="hours-info">
+                            <div className="hours-row">
+                                <span>Horas Livres:</span>
+                                <span style={{ color: '#22d3ee', fontWeight: 'bold' }}>{remainingHours}h</span>
+                            </div>
+                            <div className="hours-row">
+                                <span>Horas Ocupadas:</span>
+                                <span style={{ color: '#f472b6', fontWeight: 'bold' }}>{usedHours}h</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {/* Right side: Task manager card with fade animation and synced height */}
+                <div className="task-card" style={{ height: rightCardHeight }}>
+                    <div className="card-fade-container">
+                        {/* Task List View */}
+                        <div className={`card-fade-content${!isCardFlipped ? ' active' : ''}`}>
+                            <div className="card-title">Gerenciador de Tarefas</div>
+                            <div className="flex justify-between items-center mb-6">
+                                <button
+                                    onClick={() => openModal()}
+                                    className="modern-btn"
+                                >
+                                    <PlusCircle className="h-5 w-5" />
+                                    <span>Adicionar</span>
+                                </button>
+                            </div>
+                            <div className="task-list">
+                                {tasks.length > 0 ? (
+                                    tasks.map(task => (
+                                        <TaskItem key={task.id} task={task} onEdit={openModal} onDelete={handleDeleteTask} />
+                                    ))
+                                ) : (
+                                    <div className="text-center py-12 text-gray-500">
+                                        <p>Nenhuma tarefa cadastrada ainda.</p>
+                                        <p className="text-sm">Clique em "Adicionar" para criar sua primeira tarefa.</p>
+                                    </div>
+                                )}
+                            </div>
+                            {/* Theme Switcher */}
+                            <div className="theme-switcher">
+                                <h4>Escolha um tema</h4>
+                                <div className="theme-options">
+                                    {themes.map(theme => (
+                                        <button
+                                            key={theme.id}
+                                            className={`theme-option ${currentTheme === theme.id ? 'active' : ''}`}
+                                            onClick={() => handleThemeChange(theme.id)}
+                                            title={theme.name}
+                                            style={{
+                                                background: `linear-gradient(45deg, ${theme.bg} 50%, ${theme.card} 50%)`
+                                            }}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                        {/* Task Form View */}
+                        <div className={`card-fade-content${isCardFlipped ? ' active centered-form' : ''}`}>
+                            <TaskForm
+                                task={editingTask}
+                                onSave={(taskData) => {
+                                    handleSaveTask(taskData, () => {
+                                        closeModal();
+                                    });
+                                }}
+                                onClose={closeModal}
+                                totalWeeklyHours={totalWeeklyHours}
+                                currentTasks={tasks}
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </>
     );
 }
 
@@ -233,10 +240,10 @@ function TaskItem({ task, onEdit, onDelete }) {
                 </div>
             </div>
             <div className="task-actions">
-                <button onClick={() => onEdit(task)} title="Editar">
+                <button onClick={() => onEdit(task)} title="Editar" className="modern-btn--icon">
                     <Edit className="h-5 w-5" />
                 </button>
-                <button onClick={() => onDelete(task.id)} title="Excluir">
+                <button onClick={() => onDelete(task.id)} title="Excluir" className="modern-btn--icon">
                     <Trash2 className="h-5 w-5" />
                 </button>
             </div>
@@ -269,40 +276,30 @@ function TaskForm({ task, onSave, onClose, totalWeeklyHours, currentTasks }) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        
-        // Validação de campos
         if (!formData.name.trim()) {
             alert('Por favor, informe o nome da tarefa.');
             return;
         }
-        
         const duration = Number(formData.duration);
         if (isNaN(duration) || duration <= 0) {
             alert('Por favor, informe uma duração válida (maior que zero).');
             return;
         }
-
-        // Check if the new task would exceed the total weekly hours
         const newTotalHours = currentUsedHours + duration;
         if (newTotalHours > totalWeeklyHours) {
             alert(`Não é possível adicionar ${duration}h. Você tem apenas ${availableHours}h disponíveis de ${totalWeeklyHours}h totais.`);
             return;
         }
-        
-        onSave({
-            ...formData,
-            duration: duration
-        });
+        onSave({ ...formData, duration });
     };
 
     return (
         <div className="h-full flex flex-col task-form-card">
             <div className="flex justify-between items-center mb-6">
                 <h3 className="text-2xl font-bold tracking-tight text-gray-800" style={{ fontFamily: 'Inter, sans-serif' }}>{task ? 'Editar Tarefa' : 'Nova Tarefa'}</h3>
-                <button 
-                    type="button" 
-                    onClick={onClose} 
-                    className="p-2 hover:bg-gray-200 rounded-full transition-colors"
+                <button
+                    onClick={onClose}
+                    className="modern-btn--icon"
                 >
                     <X className="h-6 w-6" />
                 </button>
@@ -314,7 +311,7 @@ function TaskForm({ task, onSave, onClose, totalWeeklyHours, currentTasks }) {
                     <span className="font-semibold text-blue-700">{availableHours}h de {totalWeeklyHours}h</span>
                 </div>
                 <div className="mt-2 text-xs text-gray-600">
-                    {availableHours <= 0 ? 
+                    {availableHours <= 0 ?
                         'Você não tem horas disponíveis. Remova algumas tarefas ou aumente o total de horas semanais.' :
                         `Você pode adicionar até ${availableHours}h nesta tarefa.`
                     }
@@ -323,14 +320,14 @@ function TaskForm({ task, onSave, onClose, totalWeeklyHours, currentTasks }) {
             <form onSubmit={handleSubmit} className="flex-1 flex flex-col gap-6">
                 <div>
                     <label htmlFor="name" className="block text-sm font-semibold mb-2 text-gray-700">Nome da Tarefa *</label>
-                    <input 
-                        type="text" 
-                        name="name" 
-                        id="name" 
-                        value={formData.name} 
-                        onChange={handleChange} 
-                        required 
-                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm font-medium"
+                    <input
+                        type="text"
+                        name="name"
+                        id="name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        required
+                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm font-medium input-sm"
                         placeholder="Digite o nome da tarefa"
                         style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '0.01em' }}
                     />
@@ -338,18 +335,20 @@ function TaskForm({ task, onSave, onClose, totalWeeklyHours, currentTasks }) {
                 <div className="flex gap-4">
                     <div className="flex-grow">
                         <label htmlFor="duration" className="block text-sm font-semibold mb-2 text-gray-700">Duração (horas/semana) *</label>
-                        <input 
-                            type="number" 
-                            name="duration" 
-                            id="duration" 
-                            value={formData.duration} 
-                            onChange={handleChange} 
-                            required 
-                            min="0.1" 
+                        <input
+                            type="number"
+                            name="duration"
+                            id="duration"
+                            value={formData.duration}
+                            onChange={handleChange}
+                            required
+                            min="1"
                             max={availableHours}
-                            step="0.1" 
-                            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm font-medium"
-                            placeholder="0.0"
+                            step="1"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm font-medium input-sm"
+                            placeholder="0"
                             style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '0.01em' }}
                         />
                         <div className="text-xs text-gray-500 mt-1">
@@ -358,46 +357,42 @@ function TaskForm({ task, onSave, onClose, totalWeeklyHours, currentTasks }) {
                     </div>
                     <div>
                         <label htmlFor="color" className="block text-sm font-semibold mb-2 text-gray-700">Cor</label>
-                        <input 
-                            type="color" 
-                            name="color" 
-                            id="color" 
-                            value={formData.color} 
-                            onChange={handleChange} 
+                        <input
+                            type="color"
+                            name="color"
+                            id="color"
+                            value={formData.color}
+                            onChange={handleChange}
                             className="w-16 h-12 p-1 bg-white border border-gray-300 rounded-lg cursor-pointer transition-all hover:scale-105 shadow-sm"
                         />
                     </div>
                 </div>
                 <div>
                     <label htmlFor="description" className="block text-sm font-semibold mb-2 text-gray-700">Observação (Opcional)</label>
-                    <textarea 
-                        name="description" 
-                        id="description" 
-                        value={formData.description} 
-                        onChange={handleChange} 
-                        rows="4" 
-                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm font-medium resize-none"
+                    <textarea
+                        name="description"
+                        id="description"
+                        value={formData.description}
+                        onChange={handleChange}
+                        rows="4"
+                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm font-medium resize-none input-sm"
                         placeholder="Adicione uma observação sobre a tarefa..."
                         style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '0.01em' }}
                     ></textarea>
                 </div>
                 <div className="flex justify-end gap-3 pt-6 border-t border-gray-200 mt-6">
-                    <button 
-                        type="button" 
-                        onClick={onClose} 
-                        className="py-3 px-6 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-lg transition-colors shadow-sm"
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="modern-btn modern-btn--sm"
                         style={{ fontFamily: 'Inter, sans-serif' }}
                     >
                         Cancelar
                     </button>
-                    <button 
-                        type="submit" 
+                    <button
+                        type="submit"
                         disabled={availableHours <= 0}
-                        className={`py-3 px-6 font-semibold rounded-lg transition-colors shadow-sm ${
-                            availableHours <= 0 
-                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                                : 'bg-blue-600 hover:bg-blue-700 text-white'
-                        }`}
+                        className={`modern-btn modern-btn--sm${availableHours <= 0 ? ' cursor-not-allowed' : ''}`}
                         style={{ fontFamily: 'Inter, sans-serif' }}
                     >
                         {task ? 'Atualizar' : 'Criar'} Tarefa
