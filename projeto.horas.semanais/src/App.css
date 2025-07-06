@@ -238,6 +238,9 @@
   position: relative;
   width: 100%;
   height: 100%;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
 }
 
 .card-fade-content {
@@ -256,6 +259,25 @@
   opacity: 1;
   pointer-events: auto;
   z-index: 2;
+}
+
+.card-fade-content.centered-form {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+@media (max-width: 900px) {
+  .card-fade-content.centered-form {
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 2rem;
+  }
 }
 
 /* Remove old flip styles */

@@ -194,8 +194,7 @@ export default function App() {
                                         onClick={() => handleThemeChange(theme.id)}
                                         title={theme.name}
                                         style={{
-                                            '--bg-color': theme.bg,
-                                            '--card-color': theme.card
+                                            background: `linear-gradient(45deg, ${theme.bg} 50%, ${theme.card} 50%)`
                                         }}
                                     />
                                 ))}
@@ -203,7 +202,7 @@ export default function App() {
                         </div>
                     </div>
                     {/* Task Form View */}
-                    <div className={`card-fade-content${isCardFlipped ? ' active' : ''}`}>
+                    <div className={`card-fade-content${isCardFlipped ? ' active centered-form' : ''}`}>
                         <TaskForm
                             task={editingTask}
                             onSave={(taskData) => {
