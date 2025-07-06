@@ -109,7 +109,8 @@ export function useTasks(userId, isAuthReady) {
         const { data, error: tasksError } = await supabase
           .from('tasks')
           .select('*')
-          .eq('user_id', userId);
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false });
         if (tasksError) throw tasksError;
         setTasks(data || []);
         setIsLoading(false);
@@ -135,13 +136,12 @@ export function useTasks(userId, isAuthReady) {
           const { data, error } = await supabase
             .from('tasks')
             .select('*')
-            .eq('user_id', userId);
-          
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false });
           if (error) {
             console.error('Error fetching tasks after real-time update:', error);
             return;
           }
-          
           setTasks(data || []);
         } catch (err) {
           console.error('Error in real-time subscription:', err);
