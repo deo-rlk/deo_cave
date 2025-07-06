@@ -157,7 +157,7 @@ export default function App() {
                 </div>
             </div>
             {/* Right side: Task manager card with fade animation and synced height */}
-            <div className="task-card" style={{ minHeight: rightCardHeight }}>
+            <div className="task-card" style={{ height: rightCardHeight }}>
                 <div className="card-fade-container">
                     {/* Task List View */}
                     <div className={`card-fade-content${!isCardFlipped ? ' active' : ''}`}>
