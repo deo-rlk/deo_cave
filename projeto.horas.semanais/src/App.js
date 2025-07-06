@@ -1,12 +1,8 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
-import { Doughnut } from 'react-chartjs-2';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import Plot from 'react-plotly.js';
 import { useSupabaseAuth, useUserSettings, useTasks } from './supabaseService';
 import { PlusCircle, Edit, Trash2, X } from "lucide-react";
 import './App.css';
-
-// Registro do Chart.js (corrigido)
-ChartJS.register(ArcElement, Tooltip, Legend);
 
 // --- Componente Principal da Aplicação ---
 export default function App() {
@@ -19,11 +15,20 @@ export default function App() {
     const [editingTask, setEditingTask] = useState(null);
     const [currentTheme, setCurrentTheme] = useState(1);
     const [isCardFlipped, setIsCardFlipped] = useState(false);
+    const leftColRef = useRef(null);
+    const [leftColHeight, setLeftColHeight] = useState('auto');
 
     // --- Theme Management ---
     useEffect(() => {
         document.body.className = `theme-${currentTheme}`;
     }, [currentTheme]);
+
+    // --- Sync Task Card Height with Left Column ---
+    useEffect(() => {
+        if (leftColRef.current) {
+            setLeftColHeight(leftColRef.current.offsetHeight + 'px');
+        }
+    }, [tasks, totalWeeklyHours, isLoading]);
 
     const themes = [
         { id: 1, name: 'Ocean Blue', bg: '#0B1D3A', card: '#7FA1C2' },
@@ -59,103 +64,52 @@ export default function App() {
     const closeModal = () => {
         setIsCardFlipped(false);
         setTimeout(() => {
-        setEditingTask(null);
+            setEditingTask(null);
         }, 400); // Wait for animation to complete
     };
 
-    // --- Dados para o Gráfico ---
-    const chartData = useMemo(() => {
-        const labels = tasks.map(task => task.name);
-        const data = tasks.map(task => task.duration);
-        const colors = tasks.map(task => task.color);
-
-        if (remainingHours > 0) {
-            labels.push('Tempo Livre');
-            data.push(remainingHours);
-            colors.push('#d1d5db'); // Cinza para tempo livre
-        }
-
-        return {
-            labels,
-            datasets: [{
-                label: 'Horas',
-                data,
-                backgroundColor: colors,
-                borderColor: '#1f2937', // Borda escura
-                borderWidth: 2,
-            }],
-        };
-    }, [tasks, remainingHours]);
-
-    const chartOptions = {
-        responsive: true,
-        maintainAspectRatio: false,
-        cutout: '60%',
-        plugins: {
-            legend: {
-                display: false,
-            },
-            tooltip: {
-                callbacks: {
-                    label: function(context) {
-                        let label = context.label || '';
-                        if (label) {
-                            label += ': ';
-                        }
-                        if (context.parsed !== null) {
-                            label += `${context.parsed}h`;
-                        }
-                        return label;
-                    }
-                }
-            }
-        },
-    };
-    
-    // --- Componente de Carregamento ---
-    if (isLoading) {
-        return (
-            <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
-                <div className="text-center">
-                    <svg className="animate-spin h-10 w-10 text-blue-400 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <p className="mt-4 text-lg">Carregando seus dados...</p>
-                </div>
-            </div>
-        );
-    }
-
-    // --- Tratamento de erros ---
-    if (error) {
-        return (
-            <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
-                <div className="text-center p-8 bg-gray-800 rounded-xl max-w-md">
-                    <h2 className="text-2xl font-bold text-red-400 mb-4">Erro</h2>
-                    <p className="mb-6">{error}</p>
-                    <button 
-                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-                        onClick={() => window.location.reload()}
-                    >
-                        Tentar novamente
-                    </button>
-                </div>
-            </div>
-        );
+    // --- Dados para o Gráfico (Plotly Donut) ---
+    const chartLabels = tasks.map(task => task.name);
+    const chartValues = tasks.map(task => task.duration);
+    const chartColors = tasks.map(task => task.color);
+    if (remainingHours > 0) {
+        chartLabels.push('Tempo Livre');
+        chartValues.push(remainingHours);
+        chartColors.push('#d1d5db');
     }
 
     // --- Renderização Principal ---
     return (
         <div className="main-layout">
-            <div className="left-column">
-                {/* Top left card: Doughnut chart and total hours */}
+            <div className="left-column" ref={leftColRef}>
+                {/* Top left card: Donut chart and total hours */}
                 <div className="card">
                     <div className="card-title">Horas Semanais</div>
-                    <div className="doughnut-container">
-                        <Doughnut data={chartData} options={chartOptions} />
-                        <div style={{ marginTop: '1rem', fontSize: '1.1rem' }}>
-                            Total disponível: <strong>{totalWeeklyHours}h</strong>
+                    <div className="doughnut-container" style={{ minHeight: 260 }}>
+                        <Plot
+                            data={[{
+                                values: chartValues,
+                                labels: chartLabels,
+                                marker: { colors: chartColors },
+                                type: 'pie',
+                                hole: 0.6,
+                                textinfo: 'label+percent',
+                                textfont: { size: 16, family: 'Inter, sans-serif' },
+                                hoverinfo: 'label+value',
+                                sort: false,
+                            }]}
+                            layout={{
+                                showlegend: false,
+                                margin: { t: 0, b: 0, l: 0, r: 0 },
+                                paper_bgcolor: 'rgba(0,0,0,0)',
+                                plot_bgcolor: 'rgba(0,0,0,0)',
+                                height: 220,
+                            }}
+                            config={{ displayModeBar: false }}
+                            style={{ width: '100%', height: '220px' }}
+                        />
+                        <div style={{ marginTop: '1rem', fontSize: '1.1rem', fontWeight: 500 }}>
+                            Horas livres para usar: <strong>{remainingHours}h</strong>
                         </div>
                     </div>
                 </div>
@@ -184,9 +138,8 @@ export default function App() {
                     </div>
                 </div>
             </div>
-            
-            {/* Right side: Task manager card with fade animation */}
-            <div className="task-card">
+            {/* Right side: Task manager card with fade animation and synced height */}
+            <div className="task-card" style={{ minHeight: leftColHeight }}>
                 <div className="card-fade-container">
                     {/* Task List View */}
                     <div className={`card-fade-content${!isCardFlipped ? ' active' : ''}`}>
@@ -326,9 +279,9 @@ function TaskForm({ task, onSave, onClose, totalWeeklyHours, currentTasks }) {
     };
 
     return (
-        <div className="h-full flex flex-col">
+        <div className="h-full flex flex-col" style={{ fontFamily: 'Inter, sans-serif', background: 'rgba(255,255,255,0.95)', borderRadius: '1.25rem', boxShadow: '0 4px 24px 0 rgba(0,0,0,0.08)', padding: 24 }}>
             <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-bold">{task ? 'Editar Tarefa' : 'Nova Tarefa'}</h3>
+                <h3 className="text-2xl font-bold tracking-tight text-gray-800" style={{ fontFamily: 'Inter, sans-serif' }}>{task ? 'Editar Tarefa' : 'Nova Tarefa'}</h3>
                 <button 
                     type="button" 
                     onClick={onClose} 
@@ -337,9 +290,8 @@ function TaskForm({ task, onSave, onClose, totalWeeklyHours, currentTasks }) {
                     <X className="h-6 w-6" />
                 </button>
             </div>
-            
             {/* Hours Info */}
-            <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200 shadow-sm">
                 <div className="flex justify-between items-center text-sm">
                     <span>Horas disponíveis:</span>
                     <span className="font-semibold text-blue-700">{availableHours}h de {totalWeeklyHours}h</span>
@@ -351,84 +303,85 @@ function TaskForm({ task, onSave, onClose, totalWeeklyHours, currentTasks }) {
                     }
                 </div>
             </div>
-            
-            <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
-                <div className="space-y-6 flex-1">
-                    <div>
-                        <label htmlFor="name" className="block text-sm font-medium mb-2">Nome da Tarefa *</label>
+            <form onSubmit={handleSubmit} className="flex-1 flex flex-col gap-6">
+                <div>
+                    <label htmlFor="name" className="block text-sm font-semibold mb-2 text-gray-700">Nome da Tarefa *</label>
+                    <input 
+                        type="text" 
+                        name="name" 
+                        id="name" 
+                        value={formData.name} 
+                        onChange={handleChange} 
+                        required 
+                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm font-medium"
+                        placeholder="Digite o nome da tarefa"
+                        style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '0.01em' }}
+                    />
+                </div>
+                <div className="flex gap-4">
+                    <div className="flex-grow">
+                        <label htmlFor="duration" className="block text-sm font-semibold mb-2 text-gray-700">Duração (horas/semana) *</label>
                         <input 
-                            type="text" 
-                            name="name" 
-                            id="name" 
-                            value={formData.name} 
+                            type="number" 
+                            name="duration" 
+                            id="duration" 
+                            value={formData.duration} 
                             onChange={handleChange} 
                             required 
-                            className="w-full bg-white/90 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 transition-all" 
-                            placeholder="Digite o nome da tarefa"
+                            min="0.1" 
+                            max={availableHours}
+                            step="0.1" 
+                            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm font-medium"
+                            placeholder="0.0"
+                            style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '0.01em' }}
                         />
-                    </div>
-                    <div className="flex gap-4">
-                        <div className="flex-grow">
-                            <label htmlFor="duration" className="block text-sm font-medium mb-2">Duração (horas/semana) *</label>
-                            <input 
-                                type="number" 
-                                name="duration" 
-                                id="duration" 
-                                value={formData.duration} 
-                                onChange={handleChange} 
-                                required 
-                                min="0.1" 
-                                max={availableHours}
-                                step="0.1" 
-                                className="w-full bg-white/90 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 transition-all" 
-                                placeholder="0.0"
-                            />
-                            <div className="text-xs text-gray-500 mt-1">
-                                Máximo: {availableHours}h
-                            </div>
-                        </div>
-                        <div>
-                            <label htmlFor="color" className="block text-sm font-medium mb-2">Cor</label>
-                            <input 
-                                type="color" 
-                                name="color" 
-                                id="color" 
-                                value={formData.color} 
-                                onChange={handleChange} 
-                                className="w-16 h-12 p-1 bg-white/90 border border-gray-300 rounded-lg cursor-pointer transition-all hover:scale-105" 
-                            />
+                        <div className="text-xs text-gray-500 mt-1">
+                            Máximo: {availableHours}h
                         </div>
                     </div>
                     <div>
-                        <label htmlFor="description" className="block text-sm font-medium mb-2">Observação (Opcional)</label>
-                        <textarea 
-                            name="description" 
-                            id="description" 
-                            value={formData.description} 
+                        <label htmlFor="color" className="block text-sm font-semibold mb-2 text-gray-700">Cor</label>
+                        <input 
+                            type="color" 
+                            name="color" 
+                            id="color" 
+                            value={formData.color} 
                             onChange={handleChange} 
-                            rows="4" 
-                            className="w-full bg-white/90 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 transition-all resize-none"
-                            placeholder="Adicione uma observação sobre a tarefa..."
-                        ></textarea>
+                            className="w-16 h-12 p-1 bg-white border border-gray-300 rounded-lg cursor-pointer transition-all hover:scale-105 shadow-sm"
+                        />
                     </div>
                 </div>
-                
+                <div>
+                    <label htmlFor="description" className="block text-sm font-semibold mb-2 text-gray-700">Observação (Opcional)</label>
+                    <textarea 
+                        name="description" 
+                        id="description" 
+                        value={formData.description} 
+                        onChange={handleChange} 
+                        rows="4" 
+                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm font-medium resize-none"
+                        placeholder="Adicione uma observação sobre a tarefa..."
+                        style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '0.01em' }}
+                    ></textarea>
+                </div>
                 <div className="flex justify-end gap-3 pt-6 border-t border-gray-200 mt-6">
                     <button 
                         type="button" 
                         onClick={onClose} 
-                        className="py-3 px-6 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-lg transition-colors"
+                        className="py-3 px-6 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-lg transition-colors shadow-sm"
+                        style={{ fontFamily: 'Inter, sans-serif' }}
                     >
                         Cancelar
                     </button>
                     <button 
                         type="submit" 
                         disabled={availableHours <= 0}
-                        className={`py-3 px-6 font-semibold rounded-lg transition-colors ${
+                        className={`py-3 px-6 font-semibold rounded-lg transition-colors shadow-sm ${
                             availableHours <= 0 
                                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
                                 : 'bg-blue-600 hover:bg-blue-700 text-white'
                         }`}
+                        style={{ fontFamily: 'Inter, sans-serif' }}
                     >
                         {task ? 'Atualizar' : 'Criar'} Tarefa
                     </button>
