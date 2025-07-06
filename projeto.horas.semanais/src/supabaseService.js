@@ -146,7 +146,7 @@ export function useTasks(userId, isAuthReady) {
         user_id: userId,
         duration: Number(taskData.duration)
       };
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('tasks')
         .upsert(taskToSave);
       

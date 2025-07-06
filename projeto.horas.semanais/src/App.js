@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
 import { useSupabaseAuth, useUserSettings, useTasks } from './supabaseService';
-import { PlusCircle, Edit, Trash2, X, Palette } from "lucide-react";
+import { PlusCircle, Edit, Trash2, X } from "lucide-react";
 import './App.css';
 
 // Registro do Chart.js (corrigido)
@@ -16,7 +16,6 @@ export default function App() {
     const { tasks, isLoading, error: tasksError, handleSaveTask, handleDeleteTask } = useTasks(userId, isAuthReady);
     
     // --- Estados de UI ---
-    const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingTask, setEditingTask] = useState(null);
     const [currentTheme, setCurrentTheme] = useState(1);
     const [isCardFlipped, setIsCardFlipped] = useState(false);
@@ -60,7 +59,7 @@ export default function App() {
     const closeModal = () => {
         setIsCardFlipped(false);
         setTimeout(() => {
-            setEditingTask(null);
+        setEditingTask(null);
         }, 400); // Wait for animation to complete
     };
 
@@ -192,28 +191,28 @@ export default function App() {
                     <div className={`card-flip ${isCardFlipped ? 'flipped' : ''}`}>
                         {/* Front of card - Task List */}
                         <div className="card-front">
-                            <div className="card-title">Gerenciador de Tarefas</div>
-                            <div className="flex justify-between items-center mb-6">
-                                <button
-                                    onClick={() => openModal()}
-                                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105"
-                                >
-                                    <PlusCircle className="h-5 w-5" />
-                                    <span>Adicionar</span>
-                                </button>
-                            </div>
-                            <div className="task-list">
-                                {tasks.length > 0 ? (
-                                    tasks.map(task => (
-                                        <TaskItem key={task.id} task={task} onEdit={openModal} onDelete={handleDeleteTask} />
-                                    ))
-                                ) : (
-                                    <div className="text-center py-12 text-gray-500">
-                                        <p>Nenhuma tarefa cadastrada ainda.</p>
-                                        <p className="text-sm">Clique em "Adicionar" para criar sua primeira tarefa.</p>
-                                    </div>
-                                )}
-                            </div>
+                <div className="card-title">Gerenciador de Tarefas</div>
+                <div className="flex justify-between items-center mb-6">
+                    <button
+                        onClick={() => openModal()}
+                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105"
+                    >
+                        <PlusCircle className="h-5 w-5" />
+                        <span>Adicionar</span>
+                    </button>
+                </div>
+                <div className="task-list">
+                    {tasks.length > 0 ? (
+                        tasks.map(task => (
+                            <TaskItem key={task.id} task={task} onEdit={openModal} onDelete={handleDeleteTask} />
+                        ))
+                    ) : (
+                        <div className="text-center py-12 text-gray-500">
+                            <p>Nenhuma tarefa cadastrada ainda.</p>
+                            <p className="text-sm">Clique em "Adicionar" para criar sua primeira tarefa.</p>
+                        </div>
+                    )}
+                </div>
                             
                             {/* Theme Switcher */}
                             <div className="theme-switcher">
@@ -233,20 +232,20 @@ export default function App() {
                                     ))}
                                 </div>
                             </div>
-                        </div>
+            </div>
                         
                         {/* Back of card - Task Form */}
                         <div className="card-back">
-                            <TaskForm
-                                task={editingTask}
+                <TaskForm
+                    task={editingTask}
                                 onSave={(taskData) => {
                                     handleSaveTask(taskData, () => {
                                         // Immediate feedback - the real-time subscription will handle the actual update
                                         closeModal();
                                     });
                                 }}
-                                onClose={closeModal}
-                            />
+                    onClose={closeModal}
+                />
                         </div>
                     </div>
                 </div>
@@ -316,76 +315,76 @@ function TaskForm({ task, onSave, onClose }) {
 
     return (
         <div className="h-full flex flex-col">
-            <div className="flex justify-between items-center mb-4">
+                        <div className="flex justify-between items-center mb-4">
                 <h3 className="text-xl font-bold">{task ? 'Editar Tarefa' : 'Nova Tarefa'}</h3>
                 <button type="button" onClick={onClose} className="p-1 hover:bg-gray-700 rounded-full">
-                    <X className="h-6 w-6" />
-                </button>
-            </div>
-            
+                                <X className="h-6 w-6" />
+                            </button>
+                        </div>
+                        
             <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
                 <div className="space-y-4 flex-1">
-                    <div>
+                            <div>
                         <label htmlFor="name" className="block text-sm font-medium mb-1">Nome da Tarefa *</label>
-                        <input 
-                            type="text" 
-                            name="name" 
-                            id="name" 
-                            value={formData.name} 
-                            onChange={handleChange} 
-                            required 
+                                <input 
+                                    type="text" 
+                                    name="name" 
+                                    id="name" 
+                                    value={formData.name} 
+                                    onChange={handleChange} 
+                                    required 
                             className="w-full bg-white/90 border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 text-gray-900" 
-                        />
-                    </div>
-                    <div className="flex gap-4">
-                        <div className="flex-grow">
+                                />
+                            </div>
+                            <div className="flex gap-4">
+                                <div className="flex-grow">
                             <label htmlFor="duration" className="block text-sm font-medium mb-1">Duração (horas/semana) *</label>
-                            <input 
-                                type="number" 
-                                name="duration" 
-                                id="duration" 
-                                value={formData.duration} 
-                                onChange={handleChange} 
-                                required 
-                                min="0.1" 
-                                step="0.1" 
+                                    <input 
+                                        type="number" 
+                                        name="duration" 
+                                        id="duration" 
+                                        value={formData.duration} 
+                                        onChange={handleChange} 
+                                        required 
+                                        min="0.1" 
+                                        step="0.1" 
                                 className="w-full bg-white/90 border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 text-gray-900" 
-                            />
-                        </div>
-                        <div>
+                                    />
+                                </div>
+                                <div>
                             <label htmlFor="color" className="block text-sm font-medium mb-1">Cor</label>
-                            <input 
-                                type="color" 
-                                name="color" 
-                                id="color" 
-                                value={formData.color} 
-                                onChange={handleChange} 
+                                    <input 
+                                        type="color" 
+                                        name="color" 
+                                        id="color" 
+                                        value={formData.color} 
+                                        onChange={handleChange} 
                                 className="w-16 h-10 p-1 bg-white/90 border border-gray-300 rounded-md cursor-pointer" 
-                            />
-                        </div>
-                    </div>
-                    <div>
+                                    />
+                                </div>
+                            </div>
+                            <div>
                         <label htmlFor="description" className="block text-sm font-medium mb-1">Observação (Opcional)</label>
-                        <textarea 
-                            name="description" 
-                            id="description" 
-                            value={formData.description} 
-                            onChange={handleChange} 
-                            rows="3" 
+                                <textarea 
+                                    name="description" 
+                                    id="description" 
+                                    value={formData.description} 
+                                    onChange={handleChange} 
+                                    rows="3" 
                             className="w-full bg-white/90 border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 text-gray-900"
-                        ></textarea>
-                    </div>
-                </div>
+                                ></textarea>
+                            </div>
+                        </div>
                 
                 <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-                    <button type="button" onClick={onClose} className="py-2 px-4 bg-gray-600 hover:bg-gray-500 text-white font-semibold rounded-lg transition-colors">
-                        Cancelar
-                    </button>
-                    <button type="submit" className="py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors">
-                        Salvar Tarefa
-                    </button>
-                </div>
-            </form>
+                        <button type="button" onClick={onClose} className="py-2 px-4 bg-gray-600 hover:bg-gray-500 text-white font-semibold rounded-lg transition-colors">
+                            Cancelar
+                        </button>
+                        <button type="submit" className="py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors">
+                            Salvar Tarefa
+                        </button>
+                    </div>
+                </form>
         </div>
     );
 }
