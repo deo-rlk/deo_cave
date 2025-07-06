@@ -40,7 +40,7 @@
 /* Theme Variables */
 :root {
   --bg-color: #1C1F26;
-  --card-color: #3A475E;
+  --card-color: #647E68;
   --text-color: #f3f4f6;
   --offwhite: #f5f6fa;
   --offwhite-grey: #e9ecf1;
@@ -49,35 +49,35 @@
 /* Theme 1: Default */
 .theme-1 {
   --bg-color: #1C1F26;
-  --card-color: #3A475E;
+  --card-color: #647E68;
   --text-color: #f3f4f6;
 }
 
 /* Theme 2 */
 .theme-2 {
-  --bg-color: #1E2D3D;
-  --card-color: #5C708A;
+  --bg-color: #2D1E2F;
+  --card-color: #A37D9E;
   --text-color: #f3f4f6;
 }
 
 /* Theme 3 */
 .theme-3 {
-  --bg-color: #2B2F36;
-  --card-color: #59626D;
+  --bg-color: #14213D;
+  --card-color: #7D8597;
   --text-color: #f3f4f6;
 }
 
 /* Theme 4 */
 .theme-4 {
-  --bg-color: #232931;
-  --card-color: #5A5F66;
+  --bg-color: #1E1B18;
+  --card-color: #736B60;
   --text-color: #f3f4f6;
 }
 
 /* Theme 5 */
 .theme-5 {
-  --bg-color: #283544;
-  --card-color: #7C8B9F;
+  --bg-color: #183D3D;
+  --card-color: #88A09E;
   --text-color: #f3f4f6;
 }
 
@@ -88,7 +88,7 @@
 
 /* TaskForm card background (offwhite-grey) */
 .task-form-card {
-  background: var(--offwhite-grey) !important;
+  background: var(--card-color) !important;
   border-radius: 1.25rem;
   box-shadow: 0 4px 24px 0 rgba(0,0,0,0.08);
   padding: 24px;
