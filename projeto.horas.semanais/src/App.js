@@ -28,16 +28,11 @@ export default function App() {
         document.body.className = `theme-${currentTheme}`;
     }, [currentTheme]);
 
-    // --- Sync Task Card Height with Bottom Left Card using ResizeObserver ---
+    // --- Sync Task Card Height with Bottom Left Card ---
     useEffect(() => {
-        if (!bottomLeftCardRef.current) return;
-        const updateHeight = () => {
+        if (bottomLeftCardRef.current) {
             setRightCardHeight(bottomLeftCardRef.current.offsetHeight + 'px');
-        };
-        updateHeight();
-        const observer = new window.ResizeObserver(updateHeight);
-        observer.observe(bottomLeftCardRef.current);
-        return () => observer.disconnect();
+        }
     }, [tasks, totalWeeklyHours, isLoading, isCardFlipped]);
 
     const themes = [
@@ -125,101 +120,103 @@ export default function App() {
     // --- Renderização Principal ---
     return (
         <>
-            <div className="main-layout">
-                <div className="left-column" ref={leftColRef}>
-                    {/* Top left card: Doughnut chart and total hours */}
-                    <div className="card">
-                        <div className="card-title">Horas Semanais</div>
-                        <div className="doughnut-container" style={{ minHeight: 260 }}>
-                            <Doughnut data={chartData} options={chartOptions} />
-                            <div style={{ marginTop: '1rem', fontSize: '1.1rem', fontWeight: 500 }}>
-                                Horas livres para usar: <strong>{remainingHours}h</strong>
-                            </div>
-                        </div>
-                    </div>
-                    {/* Bottom left card: Edit total hours, show free/occupied */}
-                    <div className="card" ref={bottomLeftCardRef}>
-                        <div className="card-title">Editar Horas Semanais</div>
-                        <div className="input-group">
-                            <label htmlFor="total-hours" className="input-label">Total de Horas na Semana</label>
-                            <input
-                                type="number"
-                                id="total-hours"
-                                value={totalWeeklyHours}
-                                onChange={handleTotalHoursChange}
-                                className="input-field"
-                            />
-                        </div>
-                        <div className="hours-info">
-                            <div className="hours-row">
-                                <span>Horas Livres:</span>
-                                <span style={{ color: '#22d3ee', fontWeight: 'bold' }}>{remainingHours}h</span>
-                            </div>
-                            <div className="hours-row">
-                                <span>Horas Ocupadas:</span>
-                                <span style={{ color: '#f472b6', fontWeight: 'bold' }}>{usedHours}h</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                {/* Right side: Task manager card with fade animation and synced height */}
-                <div className="task-card" style={{ height: rightCardHeight }}>
-                    <div className="card-fade-container">
-                        {/* Task List View */}
-                        <div className={`card-fade-content${!isCardFlipped ? ' active' : ''}`}>
-                            <div className="card-title">Gerenciador de Tarefas</div>
-                            <div className="flex justify-between items-center mb-6">
-                                <button
-                                    onClick={() => openModal()}
-                                    className="modern-btn"
-                                >
-                                    <PlusCircle className="h-5 w-5" />
-                                    <span>Adicionar</span>
-                                </button>
-                            </div>
-                            <div className="task-list">
-                                {tasks.length > 0 ? (
-                                    tasks.map(task => (
-                                        <TaskItem key={task.id} task={task} onEdit={openModal} onDelete={handleDeleteTask} />
-                                    ))
-                                ) : (
-                                    <div className="text-center py-12 text-gray-500">
-                                        <p>Nenhuma tarefa cadastrada ainda.</p>
-                                        <p className="text-sm">Clique em "Adicionar" para criar sua primeira tarefa.</p>
-                                    </div>
-                                )}
-                            </div>
-                            {/* Theme Switcher */}
-                            <div className="theme-switcher">
-                                <h4>Escolha um tema</h4>
-                                <div className="theme-options">
-                                    {themes.map(theme => (
-                                        <button
-                                            key={theme.id}
-                                            className={`theme-option ${currentTheme === theme.id ? 'active' : ''}`}
-                                            onClick={() => handleThemeChange(theme.id)}
-                                            title={theme.name}
-                                            style={{
-                                                background: `linear-gradient(45deg, ${theme.bg} 50%, ${theme.card} 50%)`
-                                            }}
-                                        />
-                                    ))}
+            <div className="big-card">
+                <div className="main-layout">
+                    <div className="left-column" ref={leftColRef}>
+                        {/* Top left card: Doughnut chart and total hours */}
+                        <div className="card">
+                            <div className="card-title">Horas Semanais</div>
+                            <div className="doughnut-container" style={{ minHeight: 260 }}>
+                                <Doughnut data={chartData} options={chartOptions} />
+                                <div style={{ marginTop: '1rem', fontSize: '1.1rem', fontWeight: 500 }}>
+                                    Horas livres para usar: <strong>{remainingHours}h</strong>
                                 </div>
                             </div>
                         </div>
-                        {/* Task Form View */}
-                        <div className={`card-fade-content${isCardFlipped ? ' active centered-form' : ''}`}>
-                            <TaskForm
-                                task={editingTask}
-                                onSave={(taskData) => {
-                                    handleSaveTask(taskData, () => {
-                                        closeModal();
-                                    });
-                                }}
-                                onClose={closeModal}
-                                totalWeeklyHours={totalWeeklyHours}
-                                currentTasks={tasks}
-                            />
+                        {/* Bottom left card: Edit total hours, show free/occupied */}
+                        <div className="card" ref={bottomLeftCardRef}>
+                            <div className="card-title">Editar Horas Semanais</div>
+                            <div className="input-group">
+                                <label htmlFor="total-hours" className="input-label">Total de Horas na Semana</label>
+                                <input
+                                    type="number"
+                                    id="total-hours"
+                                    value={totalWeeklyHours}
+                                    onChange={handleTotalHoursChange}
+                                    className="input-field"
+                                />
+                            </div>
+                            <div className="hours-info">
+                                <div className="hours-row">
+                                    <span>Horas Livres:</span>
+                                    <span style={{ color: '#22d3ee', fontWeight: 'bold' }}>{remainingHours}h</span>
+                                </div>
+                                <div className="hours-row">
+                                    <span>Horas Ocupadas:</span>
+                                    <span style={{ color: '#f472b6', fontWeight: 'bold' }}>{usedHours}h</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {/* Right side: Task manager card with fade animation and synced height */}
+                    <div className="task-card" style={{ height: rightCardHeight }}>
+                        <div className="card-fade-container">
+                            {/* Task List View */}
+                            <div className={`card-fade-content${!isCardFlipped ? ' active' : ''}`}>
+                                <div className="card-title">Gerenciador de Tarefas</div>
+                                <div className="flex justify-between items-center mb-6">
+                                    <button
+                                        onClick={() => openModal()}
+                                        className="modern-btn"
+                                    >
+                                        <PlusCircle className="h-5 w-5" />
+                                        <span>Adicionar</span>
+                                    </button>
+                                </div>
+                                <div className="task-list">
+                                    {tasks.length > 0 ? (
+                                        tasks.map(task => (
+                                            <TaskItem key={task.id} task={task} onEdit={openModal} onDelete={handleDeleteTask} />
+                                        ))
+                                    ) : (
+                                        <div className="text-center py-12 text-gray-500">
+                                            <p>Nenhuma tarefa cadastrada ainda.</p>
+                                            <p className="text-sm">Clique em "Adicionar" para criar sua primeira tarefa.</p>
+                                        </div>
+                                    )}
+                                </div>
+                                {/* Theme Switcher */}
+                                <div className="theme-switcher">
+                                    <h4>Escolha um tema</h4>
+                                    <div className="theme-options">
+                                        {themes.map(theme => (
+                                            <button
+                                                key={theme.id}
+                                                className={`theme-option ${currentTheme === theme.id ? 'active' : ''}`}
+                                                onClick={() => handleThemeChange(theme.id)}
+                                                title={theme.name}
+                                                style={{
+                                                    background: `linear-gradient(45deg, ${theme.bg} 50%, ${theme.card} 50%)`
+                                                }}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                            {/* Task Form View */}
+                            <div className={`card-fade-content${isCardFlipped ? ' active centered-form' : ''}`}>
+                                <TaskForm
+                                    task={editingTask}
+                                    onSave={(taskData) => {
+                                        handleSaveTask(taskData, () => {
+                                            closeModal();
+                                        });
+                                    }}
+                                    onClose={closeModal}
+                                    totalWeeklyHours={totalWeeklyHours}
+                                    currentTasks={tasks}
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>
