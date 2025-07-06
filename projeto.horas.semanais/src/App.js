@@ -31,11 +31,11 @@ export default function App() {
     }, [tasks, totalWeeklyHours, isLoading]);
 
     const themes = [
-        { id: 1, name: 'Ocean Blue', bg: '#0B1D3A', card: '#7FA1C2' },
-        { id: 2, name: 'Forest Green', bg: '#1B3B2F', card: '#A9DCC3' },
-        { id: 3, name: 'Royal Purple', bg: '#2C1A47', card: '#CAB8FF' },
-        { id: 4, name: 'Lavender', bg: '#3A2E39', card: '#D9C4DD' },
-        { id: 5, name: 'Steel Blue', bg: '#223843', card: '#9DB4C0' }
+        { id: 1, name: 'Nord Night', bg: '#1C1F26', card: '#2E3440' },
+        { id: 2, name: 'Oceanic', bg: '#1E2D3D', card: '#3B4C5E' },
+        { id: 3, name: 'Slate', bg: '#2A2E35', card: '#43484F' },
+        { id: 4, name: 'Graphite', bg: '#202124', card: '#3C4043' },
+        { id: 5, name: 'Blue Steel', bg: '#2C3E50', card: '#34495E' }
     ];
 
     const handleThemeChange = (themeId) => {
