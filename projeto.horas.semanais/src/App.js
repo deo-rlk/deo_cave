@@ -1,8 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
 import { useSupabaseAuth, useUserSettings, useTasks } from './supabaseService';
-import { PlusCircle, Edit, Trash2, X } from "lucide-react";
+import { PlusCircle, Edit, Trash2, X, Palette } from "lucide-react";
 import './App.css';
 
 // Registro do Chart.js (corrigido)
@@ -14,8 +14,29 @@ export default function App() {
     const { userId, isAuthReady, error: authError } = useSupabaseAuth();
     const { totalWeeklyHours, error: settingsError, handleTotalHoursChange } = useUserSettings(userId, isAuthReady);
     const { tasks, isLoading, error: tasksError, handleSaveTask, handleDeleteTask } = useTasks(userId, isAuthReady);
+    
+    // --- Estados de UI ---
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingTask, setEditingTask] = useState(null);
+    const [currentTheme, setCurrentTheme] = useState(1);
+    const [isCardFlipped, setIsCardFlipped] = useState(false);
+
+    // --- Theme Management ---
+    useEffect(() => {
+        document.body.className = `theme-${currentTheme}`;
+    }, [currentTheme]);
+
+    const themes = [
+        { id: 1, name: 'Ocean', bg: '#0A192F', card: '#A8D8C9' },
+        { id: 2, name: 'Sunset', bg: '#333333', card: '#FBC4AB' },
+        { id: 3, name: 'Forest', bg: '#8A9A5B', card: '#F5F5F5' },
+        { id: 4, name: 'Desert', bg: '#F0EBE3', card: '#005F6B' },
+        { id: 5, name: 'Royal', bg: '#4C2A4C', card: '#E6E6FA' }
+    ];
+
+    const handleThemeChange = (themeId) => {
+        setCurrentTheme(themeId);
+    };
 
     // --- Error Handling ---
     const error = authError || settingsError || tasksError;
@@ -30,15 +51,17 @@ export default function App() {
         };
     }, [tasks, totalWeeklyHours]);
 
-    // --- Funções do Modal ---
+    // --- Funções do Modal com Card Flip ---
     const openModal = (task = null) => {
         setEditingTask(task);
-        setIsModalOpen(true);
+        setIsCardFlipped(true);
     };
 
     const closeModal = () => {
-        setIsModalOpen(false);
-        setEditingTask(null);
+        setIsCardFlipped(false);
+        setTimeout(() => {
+            setEditingTask(null);
+        }, 400); // Wait for animation to complete
     };
 
     // --- Dados para o Gráfico ---
@@ -125,7 +148,7 @@ export default function App() {
 
     // --- Renderização Principal ---
     return (
-        <div className="main-layout bg-gray-900 text-gray-100 font-sans p-4 sm:p-6 lg:p-8">
+        <div className="main-layout">
             <div className="left-column">
                 {/* Top left card: Doughnut chart and total hours */}
                 <div className="card">
@@ -162,38 +185,72 @@ export default function App() {
                     </div>
                 </div>
             </div>
-            {/* Right side: Task manager card */}
+            
+            {/* Right side: Task manager card with flip animation */}
             <div className="task-card">
-                <div className="card-title">Gerenciador de Tarefas</div>
-                <div className="flex justify-between items-center mb-6">
-                    <button
-                        onClick={() => openModal()}
-                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105"
-                    >
-                        <PlusCircle className="h-5 w-5" />
-                        <span>Adicionar</span>
-                    </button>
-                </div>
-                <div className="task-list">
-                    {tasks.length > 0 ? (
-                        tasks.map(task => (
-                            <TaskItem key={task.id} task={task} onEdit={openModal} onDelete={handleDeleteTask} />
-                        ))
-                    ) : (
-                        <div className="text-center py-12 text-gray-500">
-                            <p>Nenhuma tarefa cadastrada ainda.</p>
-                            <p className="text-sm">Clique em "Adicionar" para criar sua primeira tarefa.</p>
+                <div className="card-flip-container">
+                    <div className={`card-flip ${isCardFlipped ? 'flipped' : ''}`}>
+                        {/* Front of card - Task List */}
+                        <div className="card-front">
+                            <div className="card-title">Gerenciador de Tarefas</div>
+                            <div className="flex justify-between items-center mb-6">
+                                <button
+                                    onClick={() => openModal()}
+                                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105"
+                                >
+                                    <PlusCircle className="h-5 w-5" />
+                                    <span>Adicionar</span>
+                                </button>
+                            </div>
+                            <div className="task-list">
+                                {tasks.length > 0 ? (
+                                    tasks.map(task => (
+                                        <TaskItem key={task.id} task={task} onEdit={openModal} onDelete={handleDeleteTask} />
+                                    ))
+                                ) : (
+                                    <div className="text-center py-12 text-gray-500">
+                                        <p>Nenhuma tarefa cadastrada ainda.</p>
+                                        <p className="text-sm">Clique em "Adicionar" para criar sua primeira tarefa.</p>
+                                    </div>
+                                )}
+                            </div>
+                            
+                            {/* Theme Switcher */}
+                            <div className="theme-switcher">
+                                <h4>Escolha um tema</h4>
+                                <div className="theme-options">
+                                    {themes.map(theme => (
+                                        <button
+                                            key={theme.id}
+                                            className={`theme-option ${currentTheme === theme.id ? 'active' : ''}`}
+                                            onClick={() => handleThemeChange(theme.id)}
+                                            title={theme.name}
+                                            style={{
+                                                '--bg-color': theme.bg,
+                                                '--card-color': theme.card
+                                            }}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
                         </div>
-                    )}
+                        
+                        {/* Back of card - Task Form */}
+                        <div className="card-back">
+                            <TaskForm
+                                task={editingTask}
+                                onSave={(taskData) => {
+                                    handleSaveTask(taskData, () => {
+                                        // Immediate feedback - the real-time subscription will handle the actual update
+                                        closeModal();
+                                    });
+                                }}
+                                onClose={closeModal}
+                            />
+                        </div>
+                    </div>
                 </div>
             </div>
-            {isModalOpen && (
-                <TaskForm
-                    task={editingTask}
-                    onSave={handleSaveTask}
-                    onClose={closeModal}
-                />
-            )}
         </div>
     );
 }
@@ -201,19 +258,19 @@ export default function App() {
 // --- Componente do Item da Tarefa ---
 function TaskItem({ task, onEdit, onDelete }) {
     return (
-        <div className="bg-gray-700/50 rounded-lg p-4 flex items-center justify-between transition-shadow hover:shadow-md hover:shadow-blue-500/10">
-            <div className="flex items-center gap-4">
-                <div className="w-3 h-10 rounded" style={{ backgroundColor: task.color }}></div>
-                <div>
-                    <p className="font-semibold text-white">{task.name}</p>
-                    <p className="text-sm text-gray-400">{task.duration}h por semana</p>
+        <div className="task-item">
+            <div className="task-info">
+                <div className="task-color-indicator" style={{ backgroundColor: task.color }}></div>
+                <div className="task-details">
+                    <h4>{task.name}</h4>
+                    <p>{task.duration}h por semana</p>
                 </div>
             </div>
-            <div className="flex items-center gap-2">
-                <button onClick={() => onEdit(task)} className="p-2 text-gray-400 hover:text-yellow-400 transition-colors rounded-full hover:bg-gray-600">
+            <div className="task-actions">
+                <button onClick={() => onEdit(task)} title="Editar">
                     <Edit className="h-5 w-5" />
                 </button>
-                <button onClick={() => onDelete(task.id)} className="p-2 text-gray-400 hover:text-red-400 transition-colors rounded-full hover:bg-gray-600">
+                <button onClick={() => onDelete(task.id)} title="Excluir">
                     <Trash2 className="h-5 w-5" />
                 </button>
             </div>
@@ -258,80 +315,77 @@ function TaskForm({ task, onSave, onClose }) {
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md transform transition-all">
-                <form onSubmit={handleSubmit}>
-                    <div className="p-6">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-xl font-bold text-white">{task ? 'Editar Tarefa' : 'Nova Tarefa'}</h3>
-                            <button type="button" onClick={onClose} className="p-1 text-gray-400 hover:text-white rounded-full hover:bg-gray-700">
-                                <X className="h-6 w-6" />
-                            </button>
-                        </div>
-                        
-                        <div className="space-y-4">
-                            <div>
-                                <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-1">Nome da Tarefa *</label>
-                                <input 
-                                    type="text" 
-                                    name="name" 
-                                    id="name" 
-                                    value={formData.name} 
-                                    onChange={handleChange} 
-                                    required 
-                                    className="w-full bg-gray-700 text-white border-gray-600 rounded-md p-2 focus:ring-2 focus:ring-blue-500" 
-                                />
-                            </div>
-                            <div className="flex gap-4">
-                                <div className="flex-grow">
-                                    <label htmlFor="duration" className="block text-sm font-medium text-gray-300 mb-1">Duração (horas/semana) *</label>
-                                    <input 
-                                        type="number" 
-                                        name="duration" 
-                                        id="duration" 
-                                        value={formData.duration} 
-                                        onChange={handleChange} 
-                                        required 
-                                        min="0.1" 
-                                        step="0.1" 
-                                        className="w-full bg-gray-700 text-white border-gray-600 rounded-md p-2 focus:ring-2 focus:ring-blue-500" 
-                                    />
-                                </div>
-                                <div>
-                                    <label htmlFor="color" className="block text-sm font-medium text-gray-300 mb-1">Cor</label>
-                                    <input 
-                                        type="color" 
-                                        name="color" 
-                                        id="color" 
-                                        value={formData.color} 
-                                        onChange={handleChange} 
-                                        className="w-16 h-10 p-1 bg-gray-700 border-gray-600 rounded-md cursor-pointer" 
-                                    />
-                                </div>
-                            </div>
-                            <div>
-                                <label htmlFor="description" className="block text-sm font-medium text-gray-300 mb-1">Observação (Opcional)</label>
-                                <textarea 
-                                    name="description" 
-                                    id="description" 
-                                    value={formData.description} 
-                                    onChange={handleChange} 
-                                    rows="3" 
-                                    className="w-full bg-gray-700 text-white border-gray-600 rounded-md p-2 focus:ring-2 focus:ring-blue-500"
-                                ></textarea>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="bg-gray-700/50 px-6 py-4 flex justify-end gap-3 rounded-b-2xl">
-                        <button type="button" onClick={onClose} className="py-2 px-4 bg-gray-600 hover:bg-gray-500 text-white font-semibold rounded-lg transition-colors">
-                            Cancelar
-                        </button>
-                        <button type="submit" className="py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors">
-                            Salvar Tarefa
-                        </button>
-                    </div>
-                </form>
+        <div className="h-full flex flex-col">
+            <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold">{task ? 'Editar Tarefa' : 'Nova Tarefa'}</h3>
+                <button type="button" onClick={onClose} className="p-1 hover:bg-gray-700 rounded-full">
+                    <X className="h-6 w-6" />
+                </button>
             </div>
+            
+            <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
+                <div className="space-y-4 flex-1">
+                    <div>
+                        <label htmlFor="name" className="block text-sm font-medium mb-1">Nome da Tarefa *</label>
+                        <input 
+                            type="text" 
+                            name="name" 
+                            id="name" 
+                            value={formData.name} 
+                            onChange={handleChange} 
+                            required 
+                            className="w-full bg-white/90 border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 text-gray-900" 
+                        />
+                    </div>
+                    <div className="flex gap-4">
+                        <div className="flex-grow">
+                            <label htmlFor="duration" className="block text-sm font-medium mb-1">Duração (horas/semana) *</label>
+                            <input 
+                                type="number" 
+                                name="duration" 
+                                id="duration" 
+                                value={formData.duration} 
+                                onChange={handleChange} 
+                                required 
+                                min="0.1" 
+                                step="0.1" 
+                                className="w-full bg-white/90 border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 text-gray-900" 
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="color" className="block text-sm font-medium mb-1">Cor</label>
+                            <input 
+                                type="color" 
+                                name="color" 
+                                id="color" 
+                                value={formData.color} 
+                                onChange={handleChange} 
+                                className="w-16 h-10 p-1 bg-white/90 border border-gray-300 rounded-md cursor-pointer" 
+                            />
+                        </div>
+                    </div>
+                    <div>
+                        <label htmlFor="description" className="block text-sm font-medium mb-1">Observação (Opcional)</label>
+                        <textarea 
+                            name="description" 
+                            id="description" 
+                            value={formData.description} 
+                            onChange={handleChange} 
+                            rows="3" 
+                            className="w-full bg-white/90 border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 text-gray-900"
+                        ></textarea>
+                    </div>
+                </div>
+                
+                <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                    <button type="button" onClick={onClose} className="py-2 px-4 bg-gray-600 hover:bg-gray-500 text-white font-semibold rounded-lg transition-colors">
+                        Cancelar
+                    </button>
+                    <button type="submit" className="py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors">
+                        Salvar Tarefa
+                    </button>
+                </div>
+            </form>
         </div>
     );
 }

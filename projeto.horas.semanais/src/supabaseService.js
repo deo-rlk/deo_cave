@@ -138,7 +138,7 @@ export function useTasks(userId, isAuthReady) {
     };
   }, [isAuthReady, userId]);
 
-  const handleSaveTask = async (taskData) => {
+  const handleSaveTask = async (taskData, callback) => {
     if (!userId) return;
     try {
       const taskToSave = {
@@ -146,9 +146,14 @@ export function useTasks(userId, isAuthReady) {
         user_id: userId,
         duration: Number(taskData.duration)
       };
-      await supabase
+      const { data, error } = await supabase
         .from('tasks')
         .upsert(taskToSave);
+      
+      if (error) throw error;
+      
+      // Call callback if provided for immediate UI feedback
+      if (callback) callback();
     } catch (err) {
       setError('Falha ao salvar tarefa');
     }
