@@ -5,6 +5,16 @@
 ALTER TABLE IF EXISTS user_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS tasks ENABLE ROW LEVEL SECURITY;
 
+-- Create user_settings table if it doesn't exist
+CREATE TABLE IF NOT EXISTS user_settings (
+    id SERIAL PRIMARY KEY,
+    user_id UUID NOT NULL UNIQUE,
+    total_weekly_hours INTEGER DEFAULT 40,
+    theme_id INTEGER DEFAULT 1,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Add missing columns to user_settings if they don't exist
 ALTER TABLE user_settings 
 ADD COLUMN IF NOT EXISTS id SERIAL,

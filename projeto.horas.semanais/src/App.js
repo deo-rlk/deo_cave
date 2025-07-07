@@ -15,12 +15,11 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 export default function App() {
     // --- Estados do Supabase ---
     const { userId, user, isAuthReady } = useSupabaseAuth();
-    const { totalWeeklyHours, handleTotalHoursChange } = useUserSettings(userId, isAuthReady);
+    const { totalWeeklyHours, handleTotalHoursChange, currentTheme, handleThemeChange } = useUserSettings(userId, isAuthReady);
     const { tasks, handleSaveTask, handleDeleteTask } = useTasks(userId, isAuthReady);
     
     // --- Estados de UI ---
     const [editingTask, setEditingTask] = useState(null);
-    const [currentTheme, setCurrentTheme] = useState(1);
     const [isCardFlipped, setIsCardFlipped] = useState(false);
 
     // --- Theme Management ---
@@ -46,11 +45,6 @@ export default function App() {
         { id: 4, name: 'Graphite', bg: '#1E1B18', card: '#736B60' },
         { id: 5, name: 'Blue Steel', bg: '#183D3D', card: '#88A09E' }
     ];
-
-    const handleThemeChange = (themeId) => {
-        console.log('Changing theme to:', themeId);
-        setCurrentTheme(themeId);
-    };
 
     // --- Handle Logout ---
     const handleLogout = async () => {

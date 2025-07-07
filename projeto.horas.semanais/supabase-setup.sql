@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS user_settings (
     id SERIAL PRIMARY KEY,
     user_id UUID NOT NULL UNIQUE,
     total_weekly_hours INTEGER DEFAULT 40,
+    theme_id INTEGER DEFAULT 1,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

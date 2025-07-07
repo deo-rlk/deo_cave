@@ -49,6 +49,7 @@ export function useSupabaseAuth() {
 // User settings hook
 export function useUserSettings(userId, isAuthReady) {
   const [totalWeeklyHours, setTotalWeeklyHours] = useState(40);
+  const [currentTheme, setCurrentTheme] = useState(1);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -57,7 +58,7 @@ export function useUserSettings(userId, isAuthReady) {
       try {
         const { data, error: settingsError } = await supabase
           .from('user_settings')
-          .select('total_weekly_hours')
+          .select('total_weekly_hours, theme_id')
           .eq('user_id', userId)
           .single();
         if (settingsError && settingsError.code !== 'PGRST116') {
@@ -65,11 +66,13 @@ export function useUserSettings(userId, isAuthReady) {
         }
         if (data) {
           setTotalWeeklyHours(data.total_weekly_hours || 40);
+          setCurrentTheme(data.theme_id || 1);
         } else {
           await supabase
             .from('user_settings')
-            .insert([{ user_id: userId, total_weekly_hours: 40 }]);
+            .insert([{ user_id: userId, total_weekly_hours: 40, theme_id: 1 }]);
           setTotalWeeklyHours(40);
+          setCurrentTheme(1);
         }
       } catch (err) {
         setError('Falha ao carregar configurações');
@@ -97,7 +100,27 @@ export function useUserSettings(userId, isAuthReady) {
     }
   }, [userId]);
 
-  return { totalWeeklyHours, setTotalWeeklyHours, error, handleTotalHoursChange };
+  const handleThemeChange = useCallback(async (themeId) => {
+    setCurrentTheme(themeId);
+    if (userId) {
+      try {
+        await supabase
+          .from('user_settings')
+          .upsert({ user_id: userId, theme_id: themeId });
+      } catch (err) {
+        setError('Falha ao salvar tema');
+      }
+    }
+  }, [userId]);
+
+  return { 
+    totalWeeklyHours, 
+    setTotalWeeklyHours, 
+    currentTheme,
+    handleThemeChange,
+    error, 
+    handleTotalHoursChange 
+  };
 }
 
 // Tasks hook
