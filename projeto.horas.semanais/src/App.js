@@ -73,13 +73,22 @@ export default function App() {
 
     // --- Dados para o Gráfico (Chart.js Doughnut) ---
     const chartData = useMemo(() => {
-        const labels = tasks.map(task => task.name);
-        const data = tasks.map(task => task.duration);
-        const colors = tasks.map(task => task.color);
+        const labels = [];
+        const data = [];
+        const colors = [];
+        
+        // Add tasks
+        tasks.forEach(task => {
+            labels.push(task.name);
+            data.push(task.duration);
+            colors.push(task.color);
+        });
+        
+        // Add remaining time if there's any
         if (remainingHours > 0) {
             labels.push('Tempo Livre');
             data.push(remainingHours);
-            colors.push('#d1d5db');
+            colors.push('rgba(209, 213, 219, 0.8)'); // Semi-transparent gray
         }
         return {
             labels,
@@ -87,8 +96,17 @@ export default function App() {
                 label: 'Horas',
                 data,
                 backgroundColor: colors,
-                borderColor: '#1f2937',
-                borderWidth: 2,
+                borderColor: 'rgba(255, 255, 255, 0.15)',
+                borderWidth: 3,
+                hoverBorderWidth: 4,
+                hoverBorderColor: 'rgba(255, 255, 255, 0.25)',
+                hoverBackgroundColor: colors.map(color => {
+                    // Make colors slightly brighter on hover
+                    if (color.startsWith('rgba')) {
+                        return color.replace('0.8)', '0.9)');
+                    }
+                    return color;
+                })
             }],
         };
     }, [tasks, remainingHours]);
@@ -135,6 +153,13 @@ export default function App() {
                 display: false,
             },
             tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                titleColor: '#ffffff',
+                bodyColor: '#ffffff',
+                borderColor: 'rgba(255, 255, 255, 0.2)',
+                borderWidth: 1,
+                cornerRadius: 8,
+                padding: 12,
                 callbacks: {
                     label: function(context) {
                         let label = context.label || '';
@@ -149,6 +174,21 @@ export default function App() {
                 }
             }
         },
+        animation: {
+            duration: 1500,
+            easing: 'easeInOutQuart'
+        },
+        hover: {
+            animationDuration: 300
+        },
+        elements: {
+            arc: {
+                borderWidth: 3,
+                borderColor: 'rgba(255, 255, 255, 0.1)',
+                hoverBorderWidth: 4,
+                hoverBorderColor: 'rgba(255, 255, 255, 0.2)'
+            }
+        }
     };
 
     // --- Renderização Principal ---
@@ -208,7 +248,7 @@ export default function App() {
                                             >
                                                 –
                                             </button>
-                                            <div style={{ minWidth: 36, textAlign: 'center', fontWeight: 600, fontSize: '1.1rem', color: '#232931', background: '#f5f6fa', borderRadius: '0.5rem', padding: '0.5rem 0.75rem', border: '1.5px solid #d1d5db' }}>
+                                            <div style={{ minWidth: 36, textAlign: 'center', fontWeight: 900, fontSize: '1.5rem', color: themes[currentTheme-1].bg, background: 'transparent', borderRadius: '0.5rem', padding: '0.5rem 0.75rem', border: 'none', fontFamily: 'Montserrat, Inter, Arial, sans-serif', letterSpacing: '0.02em' }}>
                                                 {totalWeeklyHours}
                                             </div>
                                             <button
@@ -251,10 +291,17 @@ export default function App() {
                                         {/* Task List View */}
                                         <div className={`card-fade-content${!isCardFlipped ? ' active' : ''}`}>
                                             <div className="card-title">Gerenciador de Tarefas</div>
-                                            <div className="flex justify-between items-center mb-6">
+                                            <div className="flex justify-between items-center mb-6" style={{ marginBottom: '1.5rem' }}>
                                                 <button
                                                     onClick={() => openModal()}
                                                     className="modern-btn"
+                                                    style={{
+                                                        background: `linear-gradient(0deg, rgba(255,255,255,0.10), rgba(255,255,255,0.10)), ${themes[currentTheme-1].bg}`,
+                                                        color: '#fff',
+                                                        border: 'none',
+                                                        backdropFilter: 'blur(6px)',
+                                                        WebkitBackdropFilter: 'blur(6px)'
+                                                    }}
                                                 >
                                                     <PlusCircle className="h-5 w-5" />
                                                     <span>Adicionar</span>
@@ -283,7 +330,7 @@ export default function App() {
                                                             onClick={() => handleThemeChange(theme.id)}
                                                             title={theme.name}
                                                             style={{
-                                                                background: `linear-gradient(45deg, ${theme.bg} 50%, ${theme.card} 50%)`
+                                                                background: `radial-gradient(circle, ${theme.bg} 0%, ${theme.card} 100%)`
                                                             }}
                                                         />
                                                     ))}
@@ -299,6 +346,8 @@ export default function App() {
                                                 onClose={closeModal}
                                                 totalWeeklyHours={totalWeeklyHours}
                                                 currentTasks={tasks}
+                                                themes={themes}
+                                                currentTheme={currentTheme}
                                             />
                                         </div>
                                     </div>
@@ -336,7 +385,7 @@ function TaskItem({ task, onEdit, onDelete }) {
 }
 
 // --- Componente do Formulário da Tarefa (Modal) ---
-function TaskForm({ task, onSave, onClose, totalWeeklyHours, currentTasks }) {
+function TaskForm({ task, onSave, onClose, totalWeeklyHours, currentTasks, themes, currentTheme }) {
     const [formData, setFormData] = useState({
         id: task?.id || null,
         name: task?.name || '',
@@ -344,6 +393,28 @@ function TaskForm({ task, onSave, onClose, totalWeeklyHours, currentTasks }) {
         color: task?.color || '#3b82f6',
         description: task?.description || '',
     });
+
+    // Update form data when task changes (for editing)
+    useEffect(() => {
+        if (task) {
+            setFormData({
+                id: task.id,
+                name: task.name,
+                duration: task.duration,
+                color: task.color,
+                description: task.description || '',
+            });
+        } else {
+            // Reset form for new task
+            setFormData({
+                id: null,
+                name: '',
+                duration: '',
+                color: '#3b82f6',
+                description: '',
+            });
+        }
+    }, [task]);
 
     // Calculate current used hours (excluding the task being edited)
     const currentUsedHours = currentTasks
@@ -374,6 +445,8 @@ function TaskForm({ task, onSave, onClose, totalWeeklyHours, currentTasks }) {
             alert(`Não é possível adicionar ${duration}h. Você tem apenas ${availableHours}h disponíveis de ${totalWeeklyHours}h totais.`);
             return;
         }
+        
+        console.log('TaskForm submitting with data:', { ...formData, duration });
         onSave({ ...formData, duration });
     };
 
@@ -384,8 +457,15 @@ function TaskForm({ task, onSave, onClose, totalWeeklyHours, currentTasks }) {
                 <button
                     onClick={onClose}
                     className="modern-btn--icon"
+                    style={{
+                        background: `linear-gradient(0deg, rgba(255,255,255,0.10), rgba(255,255,255,0.10)), ${themes[currentTheme-1].bg}`,
+                        color: '#fff',
+                        border: 'none',
+                        backdropFilter: 'blur(6px)',
+                        WebkitBackdropFilter: 'blur(6px)'
+                    }}
                 >
-                    <X className="h-6 w-6" />
+                    <X className="h-5 w-5" />
                 </button>
             </div>
             {/* Only show available hours info */}
@@ -486,12 +566,26 @@ function TaskForm({ task, onSave, onClose, totalWeeklyHours, currentTasks }) {
                         type="button"
                         onClick={onClose}
                         className="modern-btn--icon"
+                        style={{
+                            background: `linear-gradient(0deg, rgba(255,255,255,0.10), rgba(255,255,255,0.10)), ${themes[currentTheme-1].bg}`,
+                            color: '#fff',
+                            border: 'none',
+                            backdropFilter: 'blur(6px)',
+                            WebkitBackdropFilter: 'blur(6px)'
+                        }}
                     >
                         Cancelar
                     </button>
                     <button
                         type="submit"
                         className="modern-btn"
+                        style={{
+                            background: `linear-gradient(0deg, rgba(255,255,255,0.10), rgba(255,255,255,0.10)), ${themes[currentTheme-1].bg}`,
+                            color: '#fff',
+                            border: 'none',
+                            backdropFilter: 'blur(6px)',
+                            WebkitBackdropFilter: 'blur(6px)'
+                        }}
                     >
                         Salvar
                     </button>

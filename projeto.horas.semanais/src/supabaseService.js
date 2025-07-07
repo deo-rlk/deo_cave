@@ -139,17 +139,32 @@ export function useTasks(userId, isAuthReady) {
       }, async (payload) => {
         console.log('Real-time update received:', payload);
         try {
-          // Fetch fresh data immediately
-          const { data, error } = await supabase
-            .from('tasks')
-            .select('*')
-            .eq('user_id', userId)
-            .order('created_at', { ascending: false });
-          if (error) {
-            console.error('Error fetching tasks after real-time update:', error);
-            return;
+          // Handle different event types appropriately
+          if (payload.eventType === 'INSERT') {
+            // For new tasks, fetch fresh data to get the new ID
+            const { data, error } = await supabase
+              .from('tasks')
+              .select('*')
+              .eq('user_id', userId)
+              .order('created_at', { ascending: false });
+            if (error) {
+              console.error('Error fetching tasks after real-time update:', error);
+              return;
+            }
+            setTasks(data || []);
+          } else if (payload.eventType === 'UPDATE') {
+            // For updates, only update the specific task to avoid conflicts
+            setTasks(prevTasks => 
+              prevTasks.map(task => 
+                task.id === payload.new.id ? payload.new : task
+              )
+            );
+          } else if (payload.eventType === 'DELETE') {
+            // For deletes, remove the specific task
+            setTasks(prevTasks => 
+              prevTasks.filter(task => task.id !== payload.old.id)
+            );
           }
-          setTasks(data || []);
         } catch (err) {
           console.error('Error in real-time subscription:', err);
         }
@@ -166,8 +181,11 @@ export function useTasks(userId, isAuthReady) {
   const handleSaveTask = async (taskData, callback) => {
     if (!userId) return;
     try {
-      // Only include id if editing an existing task
-      const isEditing = Boolean(taskData.id && typeof taskData.id === 'number');
+      // Check if we're editing an existing task by looking for a valid ID
+      const isEditing = taskData.id && taskData.id !== null && taskData.id !== undefined;
+      
+      console.log('handleSaveTask called with:', { taskData, isEditing });
+      
       const taskToSave = {
         user_id: userId,
         name: taskData.name,
@@ -175,23 +193,36 @@ export function useTasks(userId, isAuthReady) {
         color: taskData.color,
         description: taskData.description || ''
       };
+      
       if (isEditing) {
-        taskToSave.id = taskData.id;
-      }
-      const { error } = await supabase
-        .from('tasks')
-        .upsert(taskToSave, { returning: 'minimal' });
-      if (error) throw error;
-      // Optimistically update the local state immediately
-      if (isEditing) {
+        console.log('Updating existing task with ID:', taskData.id);
+        // Update existing task
+        const { error } = await supabase
+          .from('tasks')
+          .update(taskToSave)
+          .eq('id', taskData.id)
+          .eq('user_id', userId);
+        if (error) throw error;
+        
+        console.log('Task updated successfully');
+        
+        // Optimistically update the local state
         setTasks(prevTasks => 
           prevTasks.map(task => 
             task.id === taskData.id ? { ...task, ...taskToSave } : task
           )
         );
       } else {
-        // Do not add a fake id, let the subscription update the UI
+        console.log('Creating new task');
+        // Create new task
+        const { error } = await supabase
+          .from('tasks')
+          .insert([taskToSave]);
+        if (error) throw error;
+        console.log('Task created successfully');
+        // Let the real-time subscription handle the UI update
       }
+      
       if (callback) callback();
     } catch (err) {
       setError('Falha ao salvar tarefa');
