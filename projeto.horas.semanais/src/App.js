@@ -224,7 +224,7 @@ export default function App() {
                                     <div className="card-title">Editar Horas Semanais</div>
                                     {/* Mini Card: Total de Horas na Semana with controls */}
                                     <div className="miniCard">
-                                        <div className="miniCardTitle">Total de Horas na Semana</div>
+                                        <div className="miniCardTitle">Horas na Semana</div>
                                         <div className="miniCardRow">
                                             <button
                                                 type="button"
@@ -244,7 +244,20 @@ export default function App() {
                                             >
                                                 –
                                             </button>
-                                            <div style={{ minWidth: 36, textAlign: 'center', fontWeight: 900, fontSize: '1.5rem', color: themes[currentTheme-1].bg, background: 'transparent', borderRadius: '0.5rem', padding: '0.5rem 0.75rem', border: 'none', fontFamily: 'Montserrat, Inter, Arial, sans-serif', letterSpacing: '0.02em' }}>
+                                            <div style={{ 
+                                                minWidth: 36, 
+                                                textAlign: 'center', 
+                                                fontWeight: 900, 
+                                                fontSize: '1.5rem', 
+                                                color: themes[currentTheme-1].bg, 
+                                                background: 'transparent', 
+                                                borderRadius: '0.5rem', 
+                                                padding: '0.5rem', 
+                                                border: 'none', 
+                                                fontFamily: 'Montserrat, Inter, Arial, sans-serif', 
+                                                letterSpacing: '0.02em',
+                                                lineHeight: '1'
+                                            }}>
                                                 {totalWeeklyHours}
                                             </div>
                                             <button
@@ -271,9 +284,9 @@ export default function App() {
                                     <div className="miniCard">
                                         <div className="miniCardRow">
                                             <div className="miniCardTitle">Horas Livres:</div>
-                                            <div className="miniCardContent" style={{ color: themes[currentTheme-1].bg, marginLeft: 8 }}>{remainingHours}h</div>
+                                            <div className="miniCardContent" style={{ color: themes[currentTheme-1].bg, marginLeft: 8, fontFamily: 'Montserrat, Inter, Arial, sans-serif', fontWeight: 600 }}>{remainingHours}h</div>
                                             <div className="miniCardTitle" style={{marginLeft: 24}}>Horas Ocupadas:</div>
-                                            <div className="miniCardContent" style={{ color: themes[currentTheme-1].bg, marginLeft: 8 }}>{usedHours}h</div>
+                                            <div className="miniCardContent" style={{ color: themes[currentTheme-1].bg, marginLeft: 8, fontFamily: 'Montserrat, Inter, Arial, sans-serif', fontWeight: 600 }}>{usedHours}h</div>
                                         </div>
                                     </div>
                                 </div>
