@@ -6,6 +6,9 @@ import { PlusCircle, Edit, Trash2, X, LogOut, User } from "lucide-react";
 import LoginPage from './LoginPage';
 import { supabase } from './supabaseClient';
 import './App.css';
+import SimpleBar from 'simplebar-react';
+import 'simplebar-react/dist/simplebar.min.css';
+import TaskList from './TaskList';
 
 // Register Chart.js components
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -39,7 +42,7 @@ export default function App() {
     }, [currentTheme]);
 
     const themes = [
-        { id: 1, name: 'Nord Night', bg: '#1C1F26', card: '#647E68' },
+        { id: 1, name: 'Nord Night', bg: '#183D2A', card: '#647E68' },
         { id: 2, name: 'Oceanic', bg: '#2D1E2F', card: '#A37D9E' },
         { id: 3, name: 'Slate', bg: '#14213D', card: '#7D8597' },
         { id: 4, name: 'Graphite', bg: '#1E1B18', card: '#736B60' },
@@ -227,9 +230,10 @@ export default function App() {
                                 {/* Bottom left card: Edit total hours, show free/occupied */}
                                 <div className="card">
                                     <div className="card-title">Editar Horas Semanais</div>
-                                    <div className="input-group">
-                                        <label htmlFor="total-hours" className="input-label">Total de Horas na Semana</label>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', maxWidth: 260 }}>
+                                    {/* Mini Card: Total de Horas na Semana with controls */}
+                                    <div className="miniCard">
+                                        <div className="miniCardTitle">Total de Horas na Semana</div>
+                                        <div className="miniCardRow">
                                             <button
                                                 type="button"
                                                 className="modern-btn--icon"
@@ -271,14 +275,13 @@ export default function App() {
                                             </button>
                                         </div>
                                     </div>
-                                    <div className="hours-info">
-                                        <div className="hours-row">
-                                            <span>Horas Livres:</span>
-                                            <span className="hours-value" style={{ color: themes[currentTheme-1].bg }}>{remainingHours}h</span>
-                                        </div>
-                                        <div className="hours-row">
-                                            <span>Horas Ocupadas:</span>
-                                            <span className="hours-value" style={{ color: themes[currentTheme-1].bg }}>{usedHours}h</span>
+                                    {/* Mini Card: Horas Livres/Ocupadas (side by side) */}
+                                    <div className="miniCard">
+                                        <div className="miniCardRow">
+                                            <div className="miniCardTitle">Horas Livres:</div>
+                                            <div className="miniCardContent" style={{ color: themes[currentTheme-1].bg, marginLeft: 8 }}>{remainingHours}h</div>
+                                            <div className="miniCardTitle" style={{marginLeft: 24}}>Horas Ocupadas:</div>
+                                            <div className="miniCardContent" style={{ color: themes[currentTheme-1].bg, marginLeft: 8 }}>{usedHours}h</div>
                                         </div>
                                     </div>
                                 </div>
@@ -307,35 +310,13 @@ export default function App() {
                                                     <span>Adicionar</span>
                                                 </button>
                                             </div>
-                                            <div className="task-list">
-                                                {tasks.length > 0 ? (
-                                                    tasks.map(task => (
-                                                        <TaskItem key={task.id} task={task} onEdit={openModal} onDelete={handleDeleteTask} />
-                                                    ))
-                                                ) : (
-                                                    <div className="text-center py-12 text-gray-500">
-                                                        <p>Nenhuma tarefa cadastrada ainda.</p>
-                                                        <p className="text-sm">Clique em "Adicionar" para criar sua primeira tarefa.</p>
-                                                    </div>
-                                                )}
-                                            </div>
-                                            {/* Theme Switcher */}
-                                            <div className="theme-switcher">
-                                                <h4>Escolha um tema</h4>
-                                                <div className="theme-options">
-                                                    {themes.map(theme => (
-                                                        <button
-                                                            key={theme.id}
-                                                            className={`theme-option ${currentTheme === theme.id ? 'active' : ''}`}
-                                                            onClick={() => handleThemeChange(theme.id)}
-                                                            title={theme.name}
-                                                            style={{
-                                                                background: `radial-gradient(circle, ${theme.bg} 0%, ${theme.card} 100%)`
-                                                            }}
-                                                        />
-                                                    ))}
-                                                </div>
-                                            </div>
+                                            <TaskList
+                                                tasks={tasks}
+                                                onEdit={openModal}
+                                                onDelete={handleDeleteTask}
+                                                themeBg={themes[currentTheme-1].bg}
+                                                themeCard={themes[currentTheme-1].card}
+                                            />
                                         </div>
 
                                         {/* Task Form View */}
@@ -350,6 +331,30 @@ export default function App() {
                                                 currentTheme={currentTheme}
                                             />
                                         </div>
+                                    </div>
+                                </div>
+                                {/* Mini Card: Escolha um tema (now below TaskList) */}
+                                <div className="miniCard themeCard" style={{marginTop: '1.25rem'}}>
+                                    <div className="miniCardTitle">Escolha um tema</div>
+                                    <div className="miniCardRow">
+                                        {themes.map(theme => (
+                                            <button
+                                                key={theme.id}
+                                                className={`theme-option ${currentTheme === theme.id ? 'active' : ''}`}
+                                                onClick={() => handleThemeChange(theme.id)}
+                                                title={theme.name}
+                                                style={{
+                                                    width: 32,
+                                                    height: 32,
+                                                    borderRadius: '50%',
+                                                    border: currentTheme === theme.id ? `2px solid ${theme.bg}` : '2px solid transparent',
+                                                    background: `radial-gradient(circle, ${theme.bg} 0%, ${theme.card} 100%)`,
+                                                    marginRight: 8,
+                                                    outline: 'none',
+                                                    cursor: 'pointer'
+                                                }}
+                                            />
+                                        ))}
                                     </div>
                                 </div>
                             </div>

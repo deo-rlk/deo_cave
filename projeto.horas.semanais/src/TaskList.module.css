@@ -1,0 +1,77 @@
+/* TaskList.module.css */
+.taskListContainer {
+  max-height: 420px;
+  overflow-y: auto;
+  padding-bottom: 2.5rem;
+  /* Only layout/spacing styles here */
+  --scrollbar-bg: rgba(24,28,32,0.5);
+  --scrollbar-thumb: #444c56;
+}
+
+@media (max-width: 600px) {
+  .taskListContainer {
+    padding-bottom: 1rem;
+  }
+}
+
+/* Modern dark custom scrollbar for .taskListContainer */
+.taskListContainer::-webkit-scrollbar {
+  width: 8px;
+  background: var(--scrollbar-bg);
+}
+.taskListContainer::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, var(--scrollbar-thumb) 60%, #fff0 80%, var(--scrollbar-thumb) 100%);
+  border-radius: 8px;
+  border: 2px solid var(--scrollbar-bg);
+  min-height: 40px;
+  margin-bottom: 12px;
+}
+.taskListContainer::-webkit-scrollbar-track {
+  background: var(--scrollbar-bg);
+  border-radius: 8px;
+}
+.taskListContainer::-webkit-scrollbar-corner {
+  background: var(--scrollbar-bg);
+}
+.taskListContainer::-webkit-scrollbar-button {
+  display: none;
+}
+.taskListContainer {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-bg);
+}
+
+.taskItem {
+  background: rgba(255,255,255,0.06);
+  color: #f3f4f6;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+.taskItem:last-child {
+  margin-bottom: 0;
+}
+.taskItem:hover {
+  background: rgba(255,255,255,0.12);
+}
+
+.iconBtn {
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  color: #f3f4f6;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'Montserrat', 'Inter', Arial, sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.iconBtn:hover, .iconBtn:focus {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.05);
+} 

@@ -18,6 +18,8 @@
     "react-dom": "^19.1.0",
     "react-plotly.js": "^2.6.0",
     "react-scripts": "^5.0.1",
+    "simplebar": "^6.3.2",
+    "simplebar-react": "^3.3.2",
     "web-vitals": "^2.1.4"
   },
   "scripts": {

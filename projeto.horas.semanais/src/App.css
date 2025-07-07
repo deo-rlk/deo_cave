@@ -380,11 +380,32 @@
   transform: scale(1.05);
 }
 
-/* Task List */
+/* Modern dark custom scrollbar for .task-list */
 .task-list {
   flex: 1;
   overflow-y: auto;
   margin-bottom: 1rem;
+  scrollbar-width: thin;
+  scrollbar-color: #444c56 #181c20;
+}
+.task-list::-webkit-scrollbar {
+  width: 8px;
+  background: #181c20;
+}
+.task-list::-webkit-scrollbar-thumb {
+  background: #444c56;
+  border-radius: 8px;
+  border: 2px solid #181c20;
+}
+.task-list::-webkit-scrollbar-track {
+  background: #181c20;
+  border-radius: 8px;
+}
+.task-list::-webkit-scrollbar-corner {
+  background: #181c20;
+}
+.task-list::-webkit-scrollbar-button {
+  display: none;
 }
 
 .task-item {
@@ -817,4 +838,48 @@ body, :root {
   font-family: 'Montserrat', 'Inter', Arial, sans-serif;
   font-weight: 900;
   letter-spacing: 0.01em;
+}
+
+/* Custom SimpleBar Scrollbar Styles */
+.simplebar-track,
+.simplebar-scrollbar,
+.simplebar-track.simplebar-vertical,
+.simplebar-track.simplebar-horizontal {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.miniCard, .miniCard.themeCard {
+  background: var(--card-color);
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 8px 0 rgba(0,0,0,0.10);
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.miniCard:last-child {
+  margin-bottom: 0;
+}
+
+.miniCardTitle {
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: var(--text-color, #f3f4f6);
+  margin-bottom: 0.25rem;
+}
+
+.miniCardContent {
+  font-size: 1.05rem;
+  color: var(--text-color, #f3f4f6);
+}
+
+.miniCardRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 1.5rem;
 }
