@@ -2,12 +2,10 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
 import { useSupabaseAuth, useUserSettings, useTasks } from './supabaseService';
-import { PlusCircle, Edit, Trash2, X, LogOut, User } from "lucide-react";
+import { PlusCircle, X, LogOut, User } from "lucide-react";
 import LoginPage from './LoginPage';
 import { supabase } from './supabaseClient';
 import './App.css';
-import SimpleBar from 'simplebar-react';
-import 'simplebar-react/dist/simplebar.min.css';
 import TaskList from './TaskList';
 
 // Register Chart.js components
@@ -363,29 +361,6 @@ export default function App() {
                 </div>
             </div>
         </>
-    );
-}
-
-// --- Componente do Item da Tarefa ---
-function TaskItem({ task, onEdit, onDelete }) {
-    return (
-        <div className="task-item">
-            <div className="task-info">
-                <div className="task-color-indicator" style={{ backgroundColor: task.color }}></div>
-                <div className="task-details">
-                    <h4>{task.name}</h4>
-                    <p>{task.duration}h por semana</p>
-                </div>
-            </div>
-            <div className="task-actions">
-                <button onClick={() => onEdit(task)} title="Editar" className="modern-btn--icon">
-                    <Edit className="h-5 w-5" />
-                </button>
-                <button onClick={() => onDelete(task.id)} title="Excluir" className="modern-btn--icon">
-                    <Trash2 className="h-5 w-5" />
-                </button>
-            </div>
-        </div>
     );
 }
 
