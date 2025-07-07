@@ -2,7 +2,9 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
 import { useSupabaseAuth, useUserSettings, useTasks } from './supabaseService';
-import { PlusCircle, Edit, Trash2, X } from "lucide-react";
+import { PlusCircle, Edit, Trash2, X, LogOut, User } from "lucide-react";
+import LoginPage from './LoginPage';
+import { supabase } from './supabaseClient';
 import './App.css';
 
 // Register Chart.js components
@@ -11,7 +13,7 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 // --- Componente Principal da Aplicação ---
 export default function App() {
     // --- Estados do Supabase ---
-    const { userId, isAuthReady } = useSupabaseAuth();
+    const { userId, user, isAuthReady } = useSupabaseAuth();
     const { totalWeeklyHours, handleTotalHoursChange } = useUserSettings(userId, isAuthReady);
     const { tasks, isLoading, handleSaveTask, handleDeleteTask } = useTasks(userId, isAuthReady);
     
@@ -47,6 +49,14 @@ export default function App() {
         setCurrentTheme(themeId);
     };
 
+    // --- Handle Logout ---
+    const handleLogout = async () => {
+        const { error } = await supabase.auth.signOut();
+        if (error) {
+            console.error('Error logging out:', error);
+        }
+    };
+
     // --- Cálculos de Tempo ---
     const { usedHours, remainingHours } = useMemo(() => {
         const used = tasks.reduce((acc, task) => acc + (Number(task.duration) || 0), 0);
@@ -56,19 +66,6 @@ export default function App() {
             remainingHours: Math.max(0, total - used),
         };
     }, [tasks, totalWeeklyHours]);
-
-    // --- Funções do Modal com Card Flip ---
-    const openModal = (task = null) => {
-        setEditingTask(task);
-        setIsCardFlipped(true);
-    };
-
-    const closeModal = () => {
-        setIsCardFlipped(false);
-        setTimeout(() => {
-            setEditingTask(null);
-        }, 400); // Wait for animation to complete
-    };
 
     // --- Dados para o Gráfico (Chart.js Doughnut) ---
     const chartData = useMemo(() => {
@@ -91,6 +88,39 @@ export default function App() {
             }],
         };
     }, [tasks, remainingHours]);
+
+    // --- Handle Login Success ---
+    const handleLoginSuccess = (user) => {
+        console.log('User logged in:', user);
+    };
+
+    // --- Show login page if not authenticated ---
+    if (isAuthReady && !userId) {
+        return <LoginPage onLoginSuccess={handleLoginSuccess} />;
+    }
+
+    // --- Show loading while auth is initializing ---
+    if (!isAuthReady) {
+        return (
+            <div className="loading-container">
+                <div className="loading-spinner"></div>
+                <p>Carregando...</p>
+            </div>
+        );
+    }
+
+    // --- Funções do Modal com Card Flip ---
+    const openModal = (task = null) => {
+        setEditingTask(task);
+        setIsCardFlipped(true);
+    };
+
+    const closeModal = () => {
+        setIsCardFlipped(false);
+        setTimeout(() => {
+            setEditingTask(null);
+        }, 400); // Wait for animation to complete
+    };
 
     const chartOptions = {
         responsive: true,
@@ -120,6 +150,20 @@ export default function App() {
     // --- Renderização Principal ---
     return (
         <>
+            {/* Header with user info and logout */}
+            <div className="app-header">
+                <div className="user-info">
+                    <User className="user-icon" />
+                    <span className="user-name">
+                        {user?.user_metadata?.full_name || user?.email || 'Usuário'}
+                    </span>
+                </div>
+                <button onClick={handleLogout} className="logout-btn">
+                    <LogOut className="logout-icon" />
+                    <span>Sair</span>
+                </button>
+            </div>
+
             <div className="big-card">
                 <div className="main-layout">
                     <div className="left-column" ref={leftColRef}>
@@ -203,15 +247,12 @@ export default function App() {
                                     </div>
                                 </div>
                             </div>
+
                             {/* Task Form View */}
-                            <div className={`card-fade-content${isCardFlipped ? ' active centered-form' : ''}`}>
+                            <div className={`card-fade-content${isCardFlipped ? ' active' : ''}`}>
                                 <TaskForm
                                     task={editingTask}
-                                    onSave={(taskData) => {
-                                        handleSaveTask(taskData, () => {
-                                            closeModal();
-                                        });
-                                    }}
+                                    onSave={handleSaveTask}
                                     onClose={closeModal}
                                     totalWeeklyHours={totalWeeklyHours}
                                     currentTasks={tasks}

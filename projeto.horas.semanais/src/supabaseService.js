@@ -4,6 +4,7 @@ import { supabase } from './supabaseClient';
 // Auth hook
 export function useSupabaseAuth() {
   const [userId, setUserId] = useState(null);
+  const [user, setUser] = useState(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [error, setError] = useState(null);
 
@@ -17,31 +18,32 @@ export function useSupabaseAuth() {
       }
       if (session) {
         setUserId(session.user.id);
+        setUser(session.user);
         setIsAuthReady(true);
         return;
       }
-      const { data, error: signInError } = await supabase.auth.signInAnonymously();
-      if (signInError) {
-        setError('Falha ao iniciar sessão');
-        setIsAuthReady(true);
-        return;
-      }
-      if (data?.user) {
-        setUserId(data.user.id);
-      }
+      // No session found - user needs to login
       setIsAuthReady(true);
     };
+    
     checkSession();
+    
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
         setUserId(session.user.id);
+        setUser(session.user);
+      } else if (event === 'SIGNED_OUT') {
+        setUserId(null);
+        setUser(null);
       }
     });
+    
     return () => {
       authListener.subscription.unsubscribe();
     };
   }, []);
-  return { userId, isAuthReady, error };
+  
+  return { userId, user, isAuthReady, error };
 }
 
 // User settings hook
