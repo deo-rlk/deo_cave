@@ -458,6 +458,7 @@
   border: none;
   cursor: pointer;
   transition: all 0.2s ease;
+  font-family: 'Montserrat', 'Inter', Arial, sans-serif;
 }
 
 .modern-btn--icon:hover, .modern-btn--icon:focus {
