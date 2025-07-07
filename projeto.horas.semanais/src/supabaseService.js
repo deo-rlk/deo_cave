@@ -78,8 +78,13 @@ export function useUserSettings(userId, isAuthReady) {
     fetchSettings();
   }, [isAuthReady, userId]);
 
-  const handleTotalHoursChange = useCallback(async (e) => {
-    const newTotal = Number(e.target.value);
+  const handleTotalHoursChange = useCallback(async (eOrValue) => {
+    let newTotal;
+    if (typeof eOrValue === 'number') {
+      newTotal = eOrValue;
+    } else if (eOrValue && eOrValue.target) {
+      newTotal = Number(eOrValue.target.value);
+    }
     setTotalWeeklyHours(newTotal);
     if (userId) {
       try {

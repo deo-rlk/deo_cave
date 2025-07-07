@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
 import { useSupabaseAuth, useUserSettings, useTasks } from './supabaseService';
@@ -15,37 +15,39 @@ export default function App() {
     // --- Estados do Supabase ---
     const { userId, user, isAuthReady } = useSupabaseAuth();
     const { totalWeeklyHours, handleTotalHoursChange } = useUserSettings(userId, isAuthReady);
-    const { tasks, isLoading, handleSaveTask, handleDeleteTask } = useTasks(userId, isAuthReady);
+    const { tasks, handleSaveTask, handleDeleteTask } = useTasks(userId, isAuthReady);
     
     // --- Estados de UI ---
     const [editingTask, setEditingTask] = useState(null);
     const [currentTheme, setCurrentTheme] = useState(1);
     const [isCardFlipped, setIsCardFlipped] = useState(false);
-    const leftColRef = useRef(null);
-    const bottomLeftCardRef = useRef(null);
-    const [rightCardHeight, setRightCardHeight] = useState('auto');
 
     // --- Theme Management ---
     useEffect(() => {
-        document.body.className = `theme-${currentTheme}`;
+        const themeBackgroundCard = document.querySelector('.theme-background-card');
+        if (themeBackgroundCard) {
+            // Remove any existing theme classes
+            themeBackgroundCard.className = themeBackgroundCard.className.replace(/theme-\d+/g, '');
+            // Add the current theme class
+            themeBackgroundCard.classList.add(`theme-${currentTheme}`);
+            console.log('Applied theme class:', `theme-${currentTheme}`);
+        }
+        
+        // Apply theme to body for background smoke effect
+        document.body.className = document.body.className.replace(/theme-\d+/g, '');
+        document.body.classList.add(`theme-${currentTheme}`);
     }, [currentTheme]);
 
-    // --- Sync Task Card Height with Bottom Left Card ---
-    useEffect(() => {
-        if (bottomLeftCardRef.current) {
-            setRightCardHeight(bottomLeftCardRef.current.offsetHeight + 'px');
-        }
-    }, [tasks, totalWeeklyHours, isLoading, isCardFlipped]);
-
     const themes = [
-        { id: 1, name: 'Nord Night', bg: '#1C1F26', card: '#2E3440' },
-        { id: 2, name: 'Oceanic', bg: '#1E2D3D', card: '#3B4C5E' },
-        { id: 3, name: 'Slate', bg: '#2A2E35', card: '#43484F' },
-        { id: 4, name: 'Graphite', bg: '#202124', card: '#3C4043' },
-        { id: 5, name: 'Blue Steel', bg: '#2C3E50', card: '#34495E' }
+        { id: 1, name: 'Nord Night', bg: '#1C1F26', card: '#647E68' },
+        { id: 2, name: 'Oceanic', bg: '#2D1E2F', card: '#A37D9E' },
+        { id: 3, name: 'Slate', bg: '#14213D', card: '#7D8597' },
+        { id: 4, name: 'Graphite', bg: '#1E1B18', card: '#736B60' },
+        { id: 5, name: 'Blue Steel', bg: '#183D3D', card: '#88A09E' }
     ];
 
     const handleThemeChange = (themeId) => {
+        console.log('Changing theme to:', themeId);
         setCurrentTheme(themeId);
     };
 
@@ -152,113 +154,155 @@ export default function App() {
     // --- Renderização Principal ---
     return (
         <>
-            {/* Header with user info and logout */}
-            <div className="app-header">
-                <div className="user-info">
-                    <User className="user-icon" />
-                    <span className="user-name">
-                        {user?.user_metadata?.full_name || user?.email || 'Usuário'}
-                    </span>
-                </div>
-                <button onClick={handleLogout} className="logout-btn">
-                    <LogOut className="logout-icon" />
-                    <span>Sair</span>
-                </button>
-            </div>
-
-            <div className="big-card">
-                <div className="main-layout">
-                    <div className="left-column" ref={leftColRef}>
-                        {/* Top left card: Doughnut chart and total hours */}
-                        <div className="card">
-                            <div className="card-title">Horas Semanais</div>
-                            <div className="doughnut-container" style={{ minHeight: 260 }}>
-                                <Doughnut data={chartData} options={chartOptions} />
-                                <div style={{ marginTop: '1rem', fontSize: '1.1rem', fontWeight: 500 }}>
-                                    Horas livres para usar: <strong>{remainingHours}h</strong>
-                                </div>
-                            </div>
+            <div className="main-app-container">
+                <div className={`theme-background-card theme-${currentTheme}`}>
+                    {/* Header with user info and logout */}
+                    <div className="app-header">
+                        <div className="user-info">
+                            <User className="user-icon" />
+                            <span className="user-name">
+                                {user?.user_metadata?.full_name || user?.email || 'Usuário'}
+                            </span>
                         </div>
-                        {/* Bottom left card: Edit total hours, show free/occupied */}
-                        <div className="card" ref={bottomLeftCardRef}>
-                            <div className="card-title">Editar Horas Semanais</div>
-                            <div className="input-group">
-                                <label htmlFor="total-hours" className="input-label">Total de Horas na Semana</label>
-                                <input
-                                    type="number"
-                                    id="total-hours"
-                                    value={totalWeeklyHours}
-                                    onChange={handleTotalHoursChange}
-                                    className="input-field"
-                                />
-                            </div>
-                            <div className="hours-info">
-                                <div className="hours-row">
-                                    <span>Horas Livres:</span>
-                                    <span style={{ color: '#22d3ee', fontWeight: 'bold' }}>{remainingHours}h</span>
-                                </div>
-                                <div className="hours-row">
-                                    <span>Horas Ocupadas:</span>
-                                    <span style={{ color: '#f472b6', fontWeight: 'bold' }}>{usedHours}h</span>
-                                </div>
-                            </div>
-                        </div>
+                        <button onClick={handleLogout} className="logout-btn">
+                            <LogOut className="logout-icon" />
+                            <span>Sair</span>
+                        </button>
                     </div>
-                    {/* Right side: Task manager card with fade animation and synced height */}
-                    <div className="task-card" style={{ height: rightCardHeight }}>
-                        <div className="card-fade-container">
-                            {/* Task List View */}
-                            <div className={`card-fade-content${!isCardFlipped ? ' active' : ''}`}>
-                                <div className="card-title">Gerenciador de Tarefas</div>
-                                <div className="flex justify-between items-center mb-6">
-                                    <button
-                                        onClick={() => openModal()}
-                                        className="modern-btn"
-                                    >
-                                        <PlusCircle className="h-5 w-5" />
-                                        <span>Adicionar</span>
-                                    </button>
-                                </div>
-                                <div className="task-list">
-                                    {tasks.length > 0 ? (
-                                        tasks.map(task => (
-                                            <TaskItem key={task.id} task={task} onEdit={openModal} onDelete={handleDeleteTask} />
-                                        ))
-                                    ) : (
-                                        <div className="text-center py-12 text-gray-500">
-                                            <p>Nenhuma tarefa cadastrada ainda.</p>
-                                            <p className="text-sm">Clique em "Adicionar" para criar sua primeira tarefa.</p>
+
+                    <div className="app-container">
+                        <div className="cards-layout">
+                            {/* Left Column Container */}
+                            <div className="left-column-container">
+                                {/* Top left card: Doughnut chart and total hours */}
+                                <div className="card">
+                                    <div className="card-title">Horas Semanais</div>
+                                    <div className="doughnut-container" style={{ minHeight: 260 }}>
+                                        <Doughnut data={chartData} options={chartOptions} />
+                                        <div style={{ marginTop: '1rem', fontSize: '1.1rem', fontWeight: 500 }}>
+                                            Horas livres para usar: <strong>{remainingHours}h</strong>
                                         </div>
-                                    )}
+                                    </div>
                                 </div>
-                                {/* Theme Switcher */}
-                                <div className="theme-switcher">
-                                    <h4>Escolha um tema</h4>
-                                    <div className="theme-options">
-                                        {themes.map(theme => (
+                                {/* Bottom left card: Edit total hours, show free/occupied */}
+                                <div className="card">
+                                    <div className="card-title">Editar Horas Semanais</div>
+                                    <div className="input-group">
+                                        <label htmlFor="total-hours" className="input-label">Total de Horas na Semana</label>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', maxWidth: 260 }}>
                                             <button
-                                                key={theme.id}
-                                                className={`theme-option ${currentTheme === theme.id ? 'active' : ''}`}
-                                                onClick={() => handleThemeChange(theme.id)}
-                                                title={theme.name}
-                                                style={{
-                                                    background: `linear-gradient(45deg, ${theme.bg} 50%, ${theme.card} 50%)`
-                                                }}
-                                            />
-                                        ))}
+                                                type="button"
+                                                className="modern-btn--icon"
+                                                onClick={() => handleTotalHoursChange(Math.max(1, Number(totalWeeklyHours) - 5))}
+                                                disabled={Number(totalWeeklyHours) <= 1}
+                                                aria-label="Diminuir 5"
+                                            >
+                                                -5
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="modern-btn--icon"
+                                                onClick={() => handleTotalHoursChange(Math.max(1, Number(totalWeeklyHours) - 1))}
+                                                disabled={Number(totalWeeklyHours) <= 1}
+                                                aria-label="Diminuir duração"
+                                            >
+                                                –
+                                            </button>
+                                            <div style={{ minWidth: 36, textAlign: 'center', fontWeight: 600, fontSize: '1.1rem', color: '#232931', background: '#f5f6fa', borderRadius: '0.5rem', padding: '0.5rem 0.75rem', border: '1.5px solid #d1d5db' }}>
+                                                {totalWeeklyHours}
+                                            </div>
+                                            <button
+                                                type="button"
+                                                className="modern-btn--icon"
+                                                onClick={() => handleTotalHoursChange(Math.min(Number(totalWeeklyHours) + 1, 168))}
+                                                disabled={Number(totalWeeklyHours) >= 168}
+                                                aria-label="Aumentar duração"
+                                            >
+                                                +
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="modern-btn--icon"
+                                                onClick={() => handleTotalHoursChange(Math.min(Number(totalWeeklyHours) + 5, 168))}
+                                                disabled={Number(totalWeeklyHours) >= 168}
+                                                aria-label="Aumentar 5"
+                                            >
+                                                +5
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="hours-info">
+                                        <div className="hours-row">
+                                            <span>Horas Livres:</span>
+                                            <span className="hours-value" style={{ color: themes[currentTheme-1].bg }}>{remainingHours}h</span>
+                                        </div>
+                                        <div className="hours-row">
+                                            <span>Horas Ocupadas:</span>
+                                            <span className="hours-value" style={{ color: themes[currentTheme-1].bg }}>{usedHours}h</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Task Form View */}
-                            <div className={`card-fade-content${isCardFlipped ? ' active' : ''}`}>
-                                <TaskForm
-                                    task={editingTask}
-                                    onSave={handleSaveTask}
-                                    onClose={closeModal}
-                                    totalWeeklyHours={totalWeeklyHours}
-                                    currentTasks={tasks}
-                                />
+                            {/* Right Column Container */}
+                            <div className="right-column-container">
+                                <div className="task-card">
+                                    <div className="card-fade-container">
+                                        {/* Task List View */}
+                                        <div className={`card-fade-content${!isCardFlipped ? ' active' : ''}`}>
+                                            <div className="card-title">Gerenciador de Tarefas</div>
+                                            <div className="flex justify-between items-center mb-6">
+                                                <button
+                                                    onClick={() => openModal()}
+                                                    className="modern-btn"
+                                                >
+                                                    <PlusCircle className="h-5 w-5" />
+                                                    <span>Adicionar</span>
+                                                </button>
+                                            </div>
+                                            <div className="task-list">
+                                                {tasks.length > 0 ? (
+                                                    tasks.map(task => (
+                                                        <TaskItem key={task.id} task={task} onEdit={openModal} onDelete={handleDeleteTask} />
+                                                    ))
+                                                ) : (
+                                                    <div className="text-center py-12 text-gray-500">
+                                                        <p>Nenhuma tarefa cadastrada ainda.</p>
+                                                        <p className="text-sm">Clique em "Adicionar" para criar sua primeira tarefa.</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            {/* Theme Switcher */}
+                                            <div className="theme-switcher">
+                                                <h4>Escolha um tema</h4>
+                                                <div className="theme-options">
+                                                    {themes.map(theme => (
+                                                        <button
+                                                            key={theme.id}
+                                                            className={`theme-option ${currentTheme === theme.id ? 'active' : ''}`}
+                                                            onClick={() => handleThemeChange(theme.id)}
+                                                            title={theme.name}
+                                                            style={{
+                                                                background: `linear-gradient(45deg, ${theme.bg} 50%, ${theme.card} 50%)`
+                                                            }}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Task Form View */}
+                                        <div className={`card-fade-content${isCardFlipped ? ' active' : ''}`}>
+                                            <TaskForm
+                                                task={editingTask}
+                                                onSave={(taskData) => handleSaveTask(taskData, closeModal)}
+                                                onClose={closeModal}
+                                                totalWeeklyHours={totalWeeklyHours}
+                                                currentTasks={tasks}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -344,22 +388,13 @@ function TaskForm({ task, onSave, onClose, totalWeeklyHours, currentTasks }) {
                     <X className="h-6 w-6" />
                 </button>
             </div>
-            {/* Hours Info */}
-            <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200 shadow-sm">
-                <div className="flex justify-between items-center text-sm">
-                    <span>Horas disponíveis:</span>
-                    <span className="font-semibold text-blue-700">{availableHours}h de {totalWeeklyHours}h</span>
-                </div>
-                <div className="mt-2 text-xs text-gray-600">
-                    {availableHours <= 0 ?
-                        'Você não tem horas disponíveis. Remova algumas tarefas ou aumente o total de horas semanais.' :
-                        `Você pode adicionar até ${availableHours}h nesta tarefa.`
-                    }
-                </div>
+            {/* Only show available hours info */}
+            <div className="mb-6" style={{fontSize: '0.98rem', color: 'var(--text-color)', fontWeight: 500, marginTop: '0.5rem', marginBottom: '1.5rem'}}>
+                {`Você pode adicionar até ${availableHours}h nesta tarefa.`}
             </div>
-            <form onSubmit={handleSubmit} className="flex-1 flex flex-col gap-6">
-                <div>
-                    <label htmlFor="name" className="block text-sm font-semibold mb-2 text-gray-700">Nome da Tarefa *</label>
+            <form onSubmit={handleSubmit} className="flex-1 flex flex-col gap-0">
+                <div className="task-form-field">
+                    <label htmlFor="name">Nome da Tarefa</label>
                     <input
                         type="text"
                         name="name"
@@ -367,75 +402,98 @@ function TaskForm({ task, onSave, onClose, totalWeeklyHours, currentTasks }) {
                         value={formData.name}
                         onChange={handleChange}
                         required
-                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm font-medium input-sm"
+                        className="input-sm"
                         placeholder="Digite o nome da tarefa"
                         style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '0.01em' }}
                     />
                 </div>
-                <div className="flex gap-4">
-                    <div className="flex-grow">
-                        <label htmlFor="duration" className="block text-sm font-semibold mb-2 text-gray-700">Duração (horas/semana) *</label>
-                        <input
-                            type="number"
-                            name="duration"
-                            id="duration"
-                            value={formData.duration}
-                            onChange={handleChange}
-                            required
-                            min="1"
-                            max={availableHours}
-                            step="1"
-                            inputMode="numeric"
-                            pattern="[0-9]*"
-                            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm font-medium input-sm"
-                            placeholder="0"
-                            style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '0.01em' }}
-                        />
-                        <div className="text-xs text-gray-500 mt-1">
-                            Máximo: {availableHours}h
+                <div className="duration-color-row">
+                    <div className="task-form-field" style={{ flex: 1, minWidth: 0 }}>
+                        <label htmlFor="duration">Duração (horas/semana) *</label>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', maxWidth: 260 }}>
+                            <button
+                                type="button"
+                                className="modern-btn--icon"
+                                onClick={() => setFormData(prev => ({ ...prev, duration: Math.max(1, Number(prev.duration) - 5) }))}
+                                disabled={Number(formData.duration) <= 1}
+                                aria-label="Diminuir 5"
+                            >
+                                -5
+                            </button>
+                            <button
+                                type="button"
+                                className="modern-btn--icon"
+                                onClick={() => setFormData(prev => ({ ...prev, duration: Math.max(1, Number(prev.duration) - 1) }))}
+                                disabled={Number(formData.duration) <= 1}
+                                aria-label="Diminuir duração"
+                            >
+                                –
+                            </button>
+                            <div style={{ minWidth: 36, textAlign: 'center', fontWeight: 600, fontSize: '1.1rem', color: '#232931', background: '#f5f6fa', borderRadius: '0.5rem', padding: '0.5rem 0.75rem', border: '1.5px solid #d1d5db' }}>
+                                {formData.duration}
+                            </div>
+                            <button
+                                type="button"
+                                className="modern-btn--icon"
+                                onClick={() => setFormData(prev => ({ ...prev, duration: Math.min(availableHours, Number(prev.duration) + 1) }))}
+                                disabled={Number(formData.duration) >= availableHours}
+                                aria-label="Aumentar duração"
+                            >
+                                +
+                            </button>
+                            <button
+                                type="button"
+                                className="modern-btn--icon"
+                                onClick={() => setFormData(prev => ({ ...prev, duration: Math.min(availableHours, Number(prev.duration) + 5) }))}
+                                disabled={Number(formData.duration) >= availableHours}
+                                aria-label="Aumentar 5"
+                            >
+                                +5
+                            </button>
                         </div>
                     </div>
-                    <div>
-                        <label htmlFor="color" className="block text-sm font-semibold mb-2 text-gray-700">Cor</label>
-                        <input
-                            type="color"
-                            name="color"
-                            id="color"
-                            value={formData.color}
-                            onChange={handleChange}
-                            className="w-16 h-12 p-1 bg-white border border-gray-300 rounded-lg cursor-pointer transition-all hover:scale-105 shadow-sm"
-                        />
+                    <div className="task-form-field" style={{ flex: 1, minWidth: 0, maxWidth: 220 }}>
+                        <label htmlFor="color">Cor</label>
+                        <div className="color-picker-row">
+                            <input
+                                type="color"
+                                name="color"
+                                id="color"
+                                value={formData.color}
+                                onChange={handleChange}
+                                className="w-16 h-10 p-1 bg-white border border-gray-300 rounded-lg cursor-pointer transition-all hover:scale-105 shadow-sm"
+                                style={{ minWidth: '3rem' }}
+                            />
+                            <span className="color-preview" style={{ background: formData.color }}></span>
+                        </div>
                     </div>
                 </div>
-                <div>
-                    <label htmlFor="description" className="block text-sm font-semibold mb-2 text-gray-700">Observação (Opcional)</label>
+                <div className="task-form-field">
+                    <label htmlFor="description">Observação (Opcional)</label>
                     <textarea
                         name="description"
                         id="description"
                         value={formData.description}
                         onChange={handleChange}
                         rows="4"
-                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm font-medium resize-none input-sm"
+                        className="input-sm"
                         placeholder="Adicione uma observação sobre a tarefa..."
                         style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '0.01em' }}
                     ></textarea>
                 </div>
-                <div className="flex justify-end gap-3 pt-6 border-t border-gray-200 mt-6">
+                <div className="flex justify-end gap-3 pt-8 border-t border-gray-200 mt-8">
                     <button
                         type="button"
                         onClick={onClose}
-                        className="modern-btn modern-btn--sm"
-                        style={{ fontFamily: 'Inter, sans-serif' }}
+                        className="modern-btn--icon"
                     >
                         Cancelar
                     </button>
                     <button
                         type="submit"
-                        disabled={availableHours <= 0}
-                        className={`modern-btn modern-btn--sm${availableHours <= 0 ? ' cursor-not-allowed' : ''}`}
-                        style={{ fontFamily: 'Inter, sans-serif' }}
+                        className="modern-btn"
                     >
-                        {task ? 'Atualizar' : 'Criar'} Tarefa
+                        Salvar
                     </button>
                 </div>
             </form>
