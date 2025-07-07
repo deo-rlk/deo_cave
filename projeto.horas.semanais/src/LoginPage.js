@@ -36,7 +36,7 @@ export default function LoginPage({ onLoginSuccess }) {
     <div className="login-container">
       <div className="login-card">
         <div className="login-header">
-          <h1>Bem-vindo ao Deo Cave</h1>
+          <h1>Welcome to Weekly Hours Planner</h1>
           <p>Faça login para gerenciar suas horas semanais</p>
         </div>
         
