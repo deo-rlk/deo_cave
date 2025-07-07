@@ -175,17 +175,17 @@ export default function App() {
             }
         },
         animation: {
-            duration: 1500,
-            easing: 'easeInOutQuart'
+            duration: 2200,
+            easing: 'easeOutCubic'
         },
         hover: {
             animationDuration: 300
         },
         elements: {
             arc: {
-                borderWidth: 3,
+                borderWidth: 1,
                 borderColor: 'rgba(255, 255, 255, 0.1)',
-                hoverBorderWidth: 4,
+                hoverBorderWidth: 2,
                 hoverBorderColor: 'rgba(255, 255, 255, 0.2)'
             }
         }
